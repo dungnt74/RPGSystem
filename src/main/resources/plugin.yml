@@ -1,0 +1,15 @@
+name: MyRPG
+version: 1.0.0
+main: dungnt.rpg.MyRPG
+api-version: '1.21'
+
+author: DungNT
+description: Custom RPG Class and Skill System
+
+commands:
+  class:
+    description: Quản lý Class RPG
+    usage: /class
+  skill:
+    description: Sử dụng Skill RPG
+    usage: /skilltest <skill>
