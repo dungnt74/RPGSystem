@@ -1,7 +1,5 @@
 package dungnt.rpg.combat;
 
-import dungnt.rpg.player.PlayerStats;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DamageCalculator {
@@ -17,7 +15,7 @@ public class DamageCalculator {
                 attack * multiplier;
 
         boolean critical =
-                java.util.concurrent.ThreadLocalRandom
+                ThreadLocalRandom
                         .current()
                         .nextDouble(100)
                         < critChance;

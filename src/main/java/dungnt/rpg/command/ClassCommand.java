@@ -3,6 +3,7 @@ package dungnt.rpg.command;
 import dungnt.rpg.MyRPG;
 import dungnt.rpg.classsystem.RPGClass;
 import dungnt.rpg.player.PlayerData;
+import dungnt.rpg.stats.StatModifier;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,13 +28,30 @@ public class ClassCommand implements CommandExecutor {
 
         if (!(sender instanceof Player player)) {
 
-            sender.sendMessage("Chỉ người chơi mới sử dụng được command này.");
+            sender.sendMessage(
+                    "Chỉ người chơi mới sử dụng được command này."
+            );
 
             return true;
         }
 
         PlayerData data =
-                plugin.getPlayerManager().getData(player);
+                plugin.getPlayerManager()
+                        .getData(player);
+
+        if (data == null) {
+
+            player.sendMessage(
+                    ChatColor.RED +
+                            "Không tìm thấy dữ liệu người chơi."
+            );
+
+            return true;
+        }
+
+        // =========================
+        // /class
+        // =========================
 
         if (args.length == 0) {
 
@@ -54,12 +72,17 @@ public class ClassCommand implements CommandExecutor {
                 player.sendMessage(
                         ChatColor.GREEN +
                                 "Class hiện tại: " +
+                                ChatColor.GOLD +
                                 data.getRpgClass().getName()
                 );
             }
 
             return true;
         }
+
+        // =========================
+        // /class choose <class>
+        // =========================
 
         if (args[0].equalsIgnoreCase("choose")) {
 
@@ -76,7 +99,8 @@ public class ClassCommand implements CommandExecutor {
             String classId = args[1];
 
             RPGClass rpgClass =
-                    plugin.getClassManager().getClass(classId);
+                    plugin.getClassManager()
+                            .getClass(classId);
 
             if (rpgClass == null) {
 
@@ -88,13 +112,51 @@ public class ClassCommand implements CommandExecutor {
                 return true;
             }
 
+            // =========================
+            // XÓA MODIFIER CLASS CŨ
+            // =========================
+
+            plugin.getStatManager()
+                    .clearModifiers(
+                            player.getUniqueId()
+                    );
+
+            // =========================
+            // SET CLASS MỚI
+            // =========================
+
             data.setRpgClass(rpgClass);
+
+            // =========================
+            // APPLY MODIFIER CLASS
+            // =========================
+
+            for (StatModifier modifier :
+                    rpgClass.getStatModifiers()) {
+
+                plugin.getStatManager()
+                        .addModifier(
+                                player.getUniqueId(),
+                                modifier
+                        );
+            }
+
+            // =========================
+            // THÔNG BÁO
+            // =========================
 
             player.sendMessage(
                     ChatColor.GREEN +
                             "Bạn đã chọn Class: " +
                             ChatColor.GOLD +
                             rpgClass.getName()
+            );
+
+            player.sendMessage(
+                    ChatColor.GRAY +
+                            "Đã áp dụng " +
+                            rpgClass.getStatModifiers().size() +
+                            " Stat Modifier."
             );
 
             return true;

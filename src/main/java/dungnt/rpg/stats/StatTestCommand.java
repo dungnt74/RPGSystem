@@ -31,27 +31,16 @@ public class StatTestCommand implements CommandExecutor {
                 plugin.getPlayerManager()
                         .getData(player);
 
-        // TEST +5 ATTACK
-        plugin.getStatManager().addModifier(
-                player.getUniqueId(),
-                new StatModifier(
-                        "test_attack",
-                        StatType.ATTACK,
-                        ModifierType.FLAT,
-                        5
-                )
-        );
+        if (data == null) {
+            player.sendMessage(
+                    "§cKhông tìm thấy PlayerData!"
+            );
+            return true;
+        }
 
-        // TEST +10% ATTACK
-        plugin.getStatManager().addModifier(
-                player.getUniqueId(),
-                new StatModifier(
-                        "test_attack_percent",
-                        StatType.ATTACK,
-                        ModifierType.PERCENT,
-                        10
-                )
-        );
+        // =========================
+        // LẤY FINAL STATS
+        // =========================
 
         double attack =
                 plugin.getStatManager().getStat(
@@ -67,18 +56,58 @@ public class StatTestCommand implements CommandExecutor {
                         StatType.DEFENSE
                 );
 
+        double critChance =
+                plugin.getStatManager().getStat(
+                        player.getUniqueId(),
+                        data.getStats(),
+                        StatType.CRIT_CHANCE
+                );
+
+        double critDamage =
+                plugin.getStatManager().getStat(
+                        player.getUniqueId(),
+                        data.getStats(),
+                        StatType.CRIT_DAMAGE
+                );
+
+        // =========================
+        // HIỂN THỊ
+        // =========================
+
         player.sendMessage(
                 "§6§l===== RPG STATS ====="
         );
 
         player.sendMessage(
                 "§c⚔ Attack: §f"
-                        + String.format("%.1f", attack)
+                        + String.format(
+                        "%.1f",
+                        attack
+                )
         );
 
         player.sendMessage(
                 "§9🛡 Defense: §f"
-                        + String.format("%.1f", defense)
+                        + String.format(
+                        "%.1f",
+                        defense
+                )
+        );
+
+        player.sendMessage(
+                "§e✦ Crit Chance: §f"
+                        + String.format(
+                        "%.1f%%",
+                        critChance
+                )
+        );
+
+        player.sendMessage(
+                "§6✦ Crit Damage: §f"
+                        + String.format(
+                        "%.1f%%",
+                        critDamage * 100
+                )
         );
 
         return true;

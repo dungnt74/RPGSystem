@@ -4,8 +4,12 @@ import dungnt.rpg.classsystem.ClassManager;
 import dungnt.rpg.combat.CombatService;
 import dungnt.rpg.combat.DamageCalculator;
 import dungnt.rpg.combat.DamageListener;
+import dungnt.rpg.combat.RPGCombatListener;
 import dungnt.rpg.command.ClassCommand;
+import dungnt.rpg.command.MobTestCommand;
 import dungnt.rpg.command.SkillCommand;
+import dungnt.rpg.mob.MobManager;
+import dungnt.rpg.mob.MobStatsManager;
 import dungnt.rpg.player.PlayerManager;
 import dungnt.rpg.skills.CooldownManager;
 import dungnt.rpg.skills.SkillManager;
@@ -28,6 +32,9 @@ public final class MyRPG extends JavaPlugin {
 
     private StatManager statManager;
 
+    private MobStatsManager mobStatsManager;
+    private MobManager mobManager;
+
     @Override
     public void onEnable() {
 
@@ -46,8 +53,16 @@ public final class MyRPG extends JavaPlugin {
 
         statManager = new StatManager();
 
+        mobStatsManager = new MobStatsManager();
+        mobManager = new MobManager();
+
         getServer().getPluginManager().registerEvents(
                 new DamageListener(),
+                this
+        );
+
+        getServer().getPluginManager().registerEvents(
+                new RPGCombatListener(this),
                 this
         );
 
@@ -63,6 +78,11 @@ public final class MyRPG extends JavaPlugin {
         getCommand("stattest")
                 .setExecutor(
                         new StatTestCommand(this)
+                );
+
+        getCommand("mobtest")
+                .setExecutor(
+                        new MobTestCommand(this)
                 );
 
         getLogger().info("================================");
@@ -108,5 +128,13 @@ public final class MyRPG extends JavaPlugin {
 
     public StatManager getStatManager() {
         return statManager;
+    }
+
+    public MobStatsManager getMobStatsManager() {
+        return mobStatsManager;
+    }
+
+    public MobManager getMobManager() {
+        return mobManager;
     }
 }

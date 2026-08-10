@@ -1,7 +1,5 @@
 package dungnt.rpg.stats;
 
-import dungnt.rpg.player.PlayerStats;
-
 import java.util.*;
 
 public class StatManager {
@@ -43,7 +41,8 @@ public class StatManager {
 
         list.removeIf(
                 modifier ->
-                        modifier.getId().equals(modifierId)
+                        modifier.getId()
+                                .equals(modifierId)
         );
 
         if (list.isEmpty()) {
@@ -53,7 +52,7 @@ public class StatManager {
 
     public double getStat(
             UUID uuid,
-            PlayerStats baseStats,
+            StatsContainer baseStats,
             StatType type
     ) {
 
@@ -102,13 +101,15 @@ public class StatManager {
     }
 
     private double getBaseStat(
-            PlayerStats stats,
+            StatsContainer stats,
             StatType type
     ) {
 
         return switch (type) {
 
+            // =========================
             // OFFENSE
+            // =========================
 
             case ATTACK ->
                     stats.getAttack();
@@ -135,7 +136,9 @@ public class StatManager {
                     stats.getSkillDamage();
 
 
+            // =========================
             // DEFENSE
+            // =========================
 
             case DEFENSE ->
                     stats.getDefense();
@@ -156,7 +159,9 @@ public class StatManager {
                     stats.getDodgeChance();
 
 
+            // =========================
             // HEALTH / MANA
+            // =========================
 
             case MAX_HEALTH ->
                     stats.getMaxHealth();
@@ -180,13 +185,17 @@ public class StatManager {
                     stats.getCooldownReduction();
 
 
+            // =========================
             // MOVEMENT
+            // =========================
 
             case MOVE_SPEED ->
                     stats.getMoveSpeed();
 
 
+            // =========================
             // UTILITY
+            // =========================
 
             case EXP_BONUS ->
                     stats.getExpBonus();

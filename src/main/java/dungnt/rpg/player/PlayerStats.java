@@ -1,7 +1,8 @@
 package dungnt.rpg.player;
 
-public class PlayerStats {
+import dungnt.rpg.stats.StatsContainer;
 
+public class PlayerStats implements StatsContainer {
     // =========================
     // OFFENSE
     // =========================

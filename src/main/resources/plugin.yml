@@ -10,8 +10,14 @@ commands:
   class:
     description: Quản lý Class RPG
     usage: /class
+
   skilltest:
     description: Sử dụng Skill RPG
     usage: /skilltest <skill>
+
   stattest:
     description: Test RPG stats
+
+  mobtest:
+    description: Spawn RPG test mob
+    usage: /mobtest
