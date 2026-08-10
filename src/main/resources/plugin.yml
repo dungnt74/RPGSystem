@@ -10,6 +10,8 @@ commands:
   class:
     description: Quản lý Class RPG
     usage: /class
-  skill:
+  skilltest:
     description: Sử dụng Skill RPG
     usage: /skilltest <skill>
+  stattest:
+    description: Test RPG stats

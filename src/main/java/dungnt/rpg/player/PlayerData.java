@@ -16,6 +16,8 @@ public class PlayerData {
     private double mana;
     private double maxMana;
 
+    private final PlayerStats stats;
+
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
 
@@ -24,6 +26,8 @@ public class PlayerData {
 
         this.maxMana = 100;
         this.mana = maxMana;
+
+        this.stats = new PlayerStats();
     }
 
     public UUID getUuid() {
@@ -60,6 +64,10 @@ public class PlayerData {
 
     public void addMana(double amount) {
         setMana(this.mana + amount);
+    }
+
+    public PlayerStats getStats() {
+        return stats;
     }
 
     public boolean useMana(double amount) {

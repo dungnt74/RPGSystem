@@ -1,6 +1,7 @@
 package dungnt.rpg.classsystem;
 
 import dungnt.rpg.skills.Skill;
+import dungnt.rpg.stats.StatModifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +13,11 @@ public abstract class RPGClass {
     private final String name;
     private final String description;
 
-    private final List<Skill> skills = new ArrayList<>();
+    private final List<Skill> skills =
+            new ArrayList<>();
+
+    private final List<StatModifier> statModifiers =
+            new ArrayList<>();
 
     protected RPGClass(
             String id,
@@ -36,6 +41,11 @@ public abstract class RPGClass {
         return description;
     }
 
+
+    // =========================
+    // SKILLS
+    // =========================
+
     public void addSkill(Skill skill) {
         skills.add(skill);
     }
@@ -48,7 +58,8 @@ public abstract class RPGClass {
 
         return skills.stream()
                 .anyMatch(skill ->
-                        skill.getId().equalsIgnoreCase(skillId)
+                        skill.getId()
+                                .equalsIgnoreCase(skillId)
                 );
     }
 
@@ -56,9 +67,27 @@ public abstract class RPGClass {
 
         return skills.stream()
                 .filter(skill ->
-                        skill.getId().equalsIgnoreCase(skillId)
+                        skill.getId()
+                                .equalsIgnoreCase(skillId)
                 )
                 .findFirst()
                 .orElse(null);
+    }
+
+
+    // =========================
+    // STATS
+    // =========================
+
+    public void addStatModifier(
+            StatModifier modifier
+    ) {
+        statModifiers.add(modifier);
+    }
+
+    public List<StatModifier> getStatModifiers() {
+        return Collections.unmodifiableList(
+                statModifiers
+        );
     }
 }

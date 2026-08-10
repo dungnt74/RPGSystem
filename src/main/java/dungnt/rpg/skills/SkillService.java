@@ -79,7 +79,8 @@ public class SkillService {
                 new SkillContext(
                         player,
                         playerData,
-                        skill
+                        skill,
+                        plugin.getCombatService()
                 );
 
         // 6. Execute

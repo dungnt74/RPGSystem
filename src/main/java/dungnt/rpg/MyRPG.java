@@ -1,21 +1,32 @@
 package dungnt.rpg;
 
 import dungnt.rpg.classsystem.ClassManager;
+import dungnt.rpg.combat.CombatService;
+import dungnt.rpg.combat.DamageCalculator;
+import dungnt.rpg.combat.DamageListener;
 import dungnt.rpg.command.ClassCommand;
 import dungnt.rpg.command.SkillCommand;
 import dungnt.rpg.player.PlayerManager;
 import dungnt.rpg.skills.CooldownManager;
 import dungnt.rpg.skills.SkillManager;
 import dungnt.rpg.skills.SkillService;
+import dungnt.rpg.stats.StatManager;
+import dungnt.rpg.stats.StatTestCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MyRPG extends JavaPlugin {
 
-    private SkillService skillService;
     private SkillManager skillManager;
+    private SkillService skillService;
+
     private CooldownManager cooldownManager;
     private ClassManager classManager;
+
     private PlayerManager playerManager;
+    private DamageCalculator damageCalculator;
+    private CombatService combatService;
+
+    private StatManager statManager;
 
     @Override
     public void onEnable() {
@@ -29,6 +40,17 @@ public final class MyRPG extends JavaPlugin {
 
         skillService = new SkillService(this);
 
+        damageCalculator = new DamageCalculator();
+
+        combatService = new CombatService(this);
+
+        statManager = new StatManager();
+
+        getServer().getPluginManager().registerEvents(
+                new DamageListener(),
+                this
+        );
+
         // Commands
         getCommand("class").setExecutor(
                 new ClassCommand(this)
@@ -37,6 +59,11 @@ public final class MyRPG extends JavaPlugin {
         getCommand("skilltest").setExecutor(
                 new SkillCommand(this)
         );
+
+        getCommand("stattest")
+                .setExecutor(
+                        new StatTestCommand(this)
+                );
 
         getLogger().info("================================");
         getLogger().info("       DungNT RPG ENABLED");
@@ -69,5 +96,17 @@ public final class MyRPG extends JavaPlugin {
 
     public SkillService getSkillService() {
         return skillService;
+    }
+
+    public DamageCalculator getDamageCalculator() {
+        return damageCalculator;
+    }
+
+    public CombatService getCombatService() {
+        return combatService;
+    }
+
+    public StatManager getStatManager() {
+        return statManager;
     }
 }
