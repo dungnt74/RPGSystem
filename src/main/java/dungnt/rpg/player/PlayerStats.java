@@ -8,6 +8,8 @@ public class PlayerStats implements StatsContainer {
     // =========================
 
     private double attack = 10.0;
+    private double magicAttack = 0.0;
+
     private double attackSpeed = 0.0;
 
     private double critChance = 0.0;
@@ -72,6 +74,13 @@ public class PlayerStats implements StatsContainer {
     // =========================
     // GETTERS / SETTERS
     // =========================
+    public double getMagicAttack() {
+        return magicAttack;
+    }
+
+    public void setMagicAttack(double magicAttack) {
+        this.magicAttack = Math.max(0, magicAttack);
+    }
 
     public double getAttack() {
         return attack;

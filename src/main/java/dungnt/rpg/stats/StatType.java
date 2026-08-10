@@ -7,6 +7,8 @@ public enum StatType {
     // =========================
 
     ATTACK,
+    MAGIC_ATTACK,
+
     ATTACK_SPEED,
 
     CRIT_CHANCE,

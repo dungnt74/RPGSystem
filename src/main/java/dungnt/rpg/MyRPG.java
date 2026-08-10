@@ -1,11 +1,9 @@
 package dungnt.rpg;
 
 import dungnt.rpg.classsystem.ClassManager;
-import dungnt.rpg.combat.CombatService;
-import dungnt.rpg.combat.DamageCalculator;
-import dungnt.rpg.combat.DamageListener;
-import dungnt.rpg.combat.RPGCombatListener;
+import dungnt.rpg.combat.*;
 import dungnt.rpg.command.ClassCommand;
+import dungnt.rpg.command.MagicDamageTestCommand;
 import dungnt.rpg.command.MobTestCommand;
 import dungnt.rpg.command.SkillCommand;
 import dungnt.rpg.mob.MobManager;
@@ -45,13 +43,13 @@ public final class MyRPG extends JavaPlugin {
         skillManager = new SkillManager();
         cooldownManager = new CooldownManager();
 
-        skillService = new SkillService(this);
+        statManager = new StatManager();
 
         damageCalculator = new DamageCalculator();
 
         combatService = new CombatService(this);
 
-        statManager = new StatManager();
+        skillService = new SkillService(this);
 
         mobStatsManager = new MobStatsManager();
         mobManager = new MobManager();
@@ -63,6 +61,11 @@ public final class MyRPG extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(
                 new RPGCombatListener(this),
+                this
+        );
+
+        getServer().getPluginManager().registerEvents(
+                new RPGMobCombatListener(this),
                 this
         );
 
@@ -83,6 +86,11 @@ public final class MyRPG extends JavaPlugin {
         getCommand("mobtest")
                 .setExecutor(
                         new MobTestCommand(this)
+                );
+
+        getCommand("magicdamage")
+                .setExecutor(
+                        new MagicDamageTestCommand(this)
                 );
 
         getLogger().info("================================");

@@ -94,6 +94,21 @@ public class RPGCombatListener implements Listener {
                         StatType.CRIT_DAMAGE
                 );
 
+        // =========================
+        // ARMOR PENETRATION
+        // =========================
+
+        double armorPenetration =
+                statManager.getStat(
+                        player.getUniqueId(),
+                        stats,
+                        StatType.ARMOR_PENETRATION
+                );
+
+        // =========================
+        // CALCULATE DAMAGE
+        // =========================
+
         DamageResult result =
                 plugin.getDamageCalculator()
                         .calculate(
@@ -122,12 +137,33 @@ public class RPGCombatListener implements Listener {
             double defense =
                     mobStats.getDefense();
 
+            player.sendMessage(
+                    "§b[DEBUG] Mob: "
+                            + mobData.getId()
+                            + " | Defense: "
+                            + defense
+                            + " | Armor Pen: "
+                            + armorPenetration
+                            + "% | Damage trước: "
+                            + String.format("%.1f", damage)
+            );
+
+            // =========================
+            // APPLY DEFENSE + PENETRATION
+            // =========================
+
             damage =
                     plugin.getDamageCalculator()
                             .applyDefense(
                                     damage,
-                                    defense
+                                    defense,
+                                    armorPenetration
                             );
+
+            player.sendMessage(
+                    "§a[DEBUG] Damage sau Defense: "
+                            + String.format("%.1f", damage)
+            );
         }
 
         // =========================

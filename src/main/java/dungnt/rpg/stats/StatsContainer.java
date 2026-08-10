@@ -3,6 +3,7 @@ package dungnt.rpg.stats;
 public interface StatsContainer {
 
     double getAttack();
+    double getMagicAttack();
     double getAttackSpeed();
 
     double getCritChance();

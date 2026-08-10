@@ -8,6 +8,7 @@ public class MobStats implements StatsContainer {
     // =========================
 
     private double attack = 0.0;
+    private double magicAttack = 0.0;
     private double attackSpeed = 0.0;
 
     private double critChance = 0.0;
@@ -57,6 +58,10 @@ public class MobStats implements StatsContainer {
 
     public double getAttack() {
         return attack;
+    }
+
+    public double getMagicAttack() {
+        return magicAttack;
     }
 
     public double getAttackSpeed() {
@@ -173,8 +178,24 @@ public class MobStats implements StatsContainer {
         this.attack = Math.max(0, attack);
     }
 
+    public void setMagicAttack(double magicAttack) {
+        this.magicAttack =
+                Math.max(0, magicAttack);
+    }
+
     public void setDefense(double defense) {
         this.defense = Math.max(0, defense);
+    }
+
+    public void setDamageReduction(double damageReduction) {
+        this.damageReduction =
+                Math.max(
+                        0,
+                        Math.min(
+                                damageReduction,
+                                100
+                        )
+                );
     }
 
     public void setCritChance(double critChance) {

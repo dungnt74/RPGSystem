@@ -114,6 +114,9 @@ public class StatManager {
             case ATTACK ->
                     stats.getAttack();
 
+            case MAGIC_ATTACK ->
+                    stats.getMagicAttack();
+
             case ATTACK_SPEED ->
                     stats.getAttackSpeed();
 

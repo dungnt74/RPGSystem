@@ -21,3 +21,6 @@ commands:
   mobtest:
     description: Spawn RPG test mob
     usage: /mobtest
+
+  magicdamage:
+    description: Test magic damage
