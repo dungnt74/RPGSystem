@@ -24,3 +24,7 @@ commands:
 
   magicdamage:
     description: Test magic damage
+
+  level:
+    description: Xem Level và EXP
+    usage: /level

@@ -28,13 +28,9 @@ public class CombatService {
                 plugin.getStatManager();
     }
 
-    // =========================
-    // PLAYER -> TARGET
-    // =========================
-
-    // =========================
-// MAGIC DAMAGE
-// =========================
+    // ==================================================
+    // MAGIC DAMAGE
+    // ==================================================
 
     public DamageResult magicDamage(
             Player attacker,
@@ -102,7 +98,7 @@ public class CombatService {
         // =========================
 
         DamageResult result =
-                damageCalculator.calculate(
+                damageCalculator.calculateMagic(
                         magicAttack,
                         critChance,
                         critDamage,
@@ -113,6 +109,25 @@ public class CombatService {
                 result.getDamage();
 
         // =========================
+        // DODGE
+        // =========================
+
+        double dodgeChance =
+                getDodgeChance(target);
+
+        if (damageCalculator.isDodged(dodgeChance)) {
+
+            attacker.sendMessage(
+                    "§b§l✦ DODGE!"
+            );
+
+            return new DamageResult(
+                    0,
+                    result.isCritical()
+            );
+        }
+
+        // =========================
         // MAGIC DEFENSE
         // =========================
 
@@ -120,7 +135,7 @@ public class CombatService {
                 getMagicDefense(target);
 
         damage =
-                damageCalculator.applyDefense(
+                damageCalculator.applyMagicDefense(
                         damage,
                         magicDefense,
                         magicPenetration
@@ -138,28 +153,6 @@ public class CombatService {
                         damage,
                         damageReduction
                 );
-
-        // =========================
-        // DODGE
-        // =========================
-
-        double dodgeChance =
-                getDodgeChance(target);
-
-        if (damageCalculator.isDodged(dodgeChance)) {
-
-            if (target instanceof Player player) {
-
-                player.sendMessage(
-                        "§b§l✦ DODGE! §7Bạn đã né phép."
-                );
-            }
-
-            return new DamageResult(
-                    0,
-                    result.isCritical()
-            );
-        }
 
         // =========================
         // BLOCK
@@ -188,16 +181,38 @@ public class CombatService {
                         damage
                 );
 
-        target.damage(
-                damage,
-                attacker
+        // =========================
+        // APPLY RPG DAMAGE
+        // =========================
+
+        applyRpgDamage(
+                target,
+                damage
         );
+
+        // =========================
+        // FLOATING MAGIC DAMAGE
+        // =========================
+
+        if (damage > 0) {
+
+            plugin.getFloatingDamage().show(
+                    target,
+                    damage,
+                    result.isCritical(),
+                    true
+            );
+        }
 
         return new DamageResult(
                 damage,
                 result.isCritical()
         );
     }
+
+    // ==================================================
+    // PHYSICAL DAMAGE
+    // ==================================================
 
     public DamageResult damage(
             Player attacker,
@@ -226,6 +241,10 @@ public class CombatService {
                         attackerStats,
                         StatType.ATTACK
                 );
+
+        if (attack <= 0) {
+            return new DamageResult(0, false);
+        }
 
         // =========================
         // CRIT
@@ -280,12 +299,9 @@ public class CombatService {
 
         if (damageCalculator.isDodged(dodgeChance)) {
 
-            if (target instanceof Player player) {
-
-                player.sendMessage(
-                        "§b§l✦ DODGE! §7Bạn đã né đòn."
-                );
-            }
+            attacker.sendMessage(
+                    "§b§l✦ DODGE!"
+            );
 
             return new DamageResult(
                     0,
@@ -294,15 +310,11 @@ public class CombatService {
         }
 
         // =========================
-        // TARGET DEFENSE
+        // DEFENSE
         // =========================
 
         double defense =
                 getDefense(target);
-
-        // =========================
-        // DEFENSE
-        // =========================
 
         damage =
                 damageCalculator.applyDefense(
@@ -351,10 +363,28 @@ public class CombatService {
                         damage
                 );
 
-        target.damage(
-                damage,
-                attacker
+        // =========================
+        // APPLY RPG DAMAGE
+        // =========================
+
+        applyRpgDamage(
+                target,
+                damage
         );
+
+        // =========================
+        // FLOATING PHYSICAL DAMAGE
+        // =========================
+
+        if (damage > 0) {
+
+            plugin.getFloatingDamage().show(
+                    target,
+                    damage,
+                    result.isCritical(),
+                    false
+            );
+        }
 
         return new DamageResult(
                 damage,
@@ -362,11 +392,48 @@ public class CombatService {
         );
     }
 
+    // ==================================================
+    // APPLY RPG DAMAGE
+    // ==================================================
+
+    private void applyRpgDamage(
+            LivingEntity target,
+            double damage
+    ) {
+
+        if (damage <= 0 || target.isDead()) {
+            return;
+        }
+
+        double currentHealth =
+                target.getHealth();
+
+        double newHealth =
+                Math.max(
+                        0,
+                        currentHealth - damage
+                );
+
+        // Chỉ trừ HP RPG.
+        //
+        // KHÔNG dùng:
+        //
+        // target.damage(damage);
+        //
+        // vì sẽ tạo EntityDamageByEntityEvent
+        // và có thể gây double damage.
+
+        target.setHealth(newHealth);
+    }
+
+    // ==================================================
+    // MAGIC DEFENSE
+    // ==================================================
+
     private double getMagicDefense(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -384,7 +451,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);
@@ -399,15 +465,14 @@ public class CombatService {
         return 0.0;
     }
 
-    // =========================
-    // GET DEFENSE
-    // =========================
+    // ==================================================
+    // PHYSICAL DEFENSE
+    // ==================================================
 
     private double getDefense(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -425,7 +490,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);
@@ -441,15 +505,14 @@ public class CombatService {
         return 0.0;
     }
 
-    // =========================
-    // GET DAMAGE REDUCTION
-    // =========================
+    // ==================================================
+    // DAMAGE REDUCTION
+    // ==================================================
 
     private double getDamageReduction(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -467,7 +530,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);
@@ -482,15 +544,14 @@ public class CombatService {
         return 0.0;
     }
 
-    // =========================
-    // GET BLOCK CHANCE
-    // =========================
+    // ==================================================
+    // BLOCK CHANCE
+    // ==================================================
 
     private double getBlockChance(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -508,7 +569,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);
@@ -523,15 +583,14 @@ public class CombatService {
         return 0.0;
     }
 
-    // =========================
-    // GET BLOCK POWER
-    // =========================
+    // ==================================================
+    // BLOCK POWER
+    // ==================================================
 
     private double getBlockPower(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -549,7 +608,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);
@@ -564,11 +622,14 @@ public class CombatService {
         return 0.0;
     }
 
+    // ==================================================
+    // DODGE CHANCE
+    // ==================================================
+
     private double getDodgeChance(
             LivingEntity target
     ) {
 
-        // PLAYER
         if (target instanceof Player player) {
 
             PlayerData playerData =
@@ -586,7 +647,6 @@ public class CombatService {
             );
         }
 
-        // RPG MOB
         MobData mobData =
                 plugin.getMobManager()
                         .getMob(target);

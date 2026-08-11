@@ -2,6 +2,10 @@ package dungnt.rpg.command;
 
 import dungnt.rpg.MyRPG;
 import dungnt.rpg.combat.DamageResult;
+import dungnt.rpg.stats.ModifierType;
+import dungnt.rpg.stats.StatModifier;
+import dungnt.rpg.stats.StatType;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -9,7 +13,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-public class MagicDamageTestCommand implements CommandExecutor {
+public class MagicDamageTestCommand
+        implements CommandExecutor {
 
     private final MyRPG plugin;
 
@@ -29,6 +34,10 @@ public class MagicDamageTestCommand implements CommandExecutor {
             return true;
         }
 
+        // =========================
+        // TARGET
+        // =========================
+
         Entity targetEntity =
                 player.getTargetEntity(10);
 
@@ -41,16 +50,39 @@ public class MagicDamageTestCommand implements CommandExecutor {
             return true;
         }
 
-        // Test Magic Attack = 30
+        // =========================
+        // TEST MAGIC ATTACK
+        // =========================
+
         plugin.getStatManager().addModifier(
                 player.getUniqueId(),
-                new dungnt.rpg.stats.StatModifier(
+
+                new StatModifier(
                         "test_magic_attack",
-                        dungnt.rpg.stats.StatType.MAGIC_ATTACK,
-                        dungnt.rpg.stats.ModifierType.FLAT,
+                        StatType.MAGIC_ATTACK,
+                        ModifierType.FLAT,
                         30
                 )
         );
+
+        // =========================
+        // TEST MAGIC PENETRATION
+        // =========================
+
+        plugin.getStatManager().addModifier(
+                player.getUniqueId(),
+
+                new StatModifier(
+                        "test_magic_penetration",
+                        StatType.MAGIC_PENETRATION,
+                        ModifierType.FLAT,
+                        0
+                )
+        );
+
+        // =========================
+        // MAGIC DAMAGE
+        // =========================
 
         DamageResult result =
                 plugin.getCombatService()
@@ -59,6 +91,10 @@ public class MagicDamageTestCommand implements CommandExecutor {
                                 target,
                                 1.0
                         );
+
+        // =========================
+        // RESULT
+        // =========================
 
         player.sendMessage(
                 "§d§l===== MAGIC TEST ====="
@@ -76,6 +112,37 @@ public class MagicDamageTestCommand implements CommandExecutor {
                 "§6Critical: §f"
                         + result.isCritical()
         );
+
+        player.sendMessage(
+                "§7Magic Attack: §f30"
+        );
+
+        player.sendMessage(
+                "§7Magic Penetration: §f0%"
+        );
+
+        // =========================
+        // MOB INFO
+        // =========================
+
+        dungnt.rpg.mob.MobData mobData =
+                plugin.getMobManager()
+                        .getMob(target);
+
+        if (mobData != null) {
+
+            player.sendMessage(
+                    "§7Mob: §f"
+                            + mobData.getId()
+            );
+
+            player.sendMessage(
+                    "§7Magic Defense: §f"
+                            + mobData
+                            .getStats()
+                            .getMagicDefense()
+            );
+        }
 
         return true;
     }

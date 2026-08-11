@@ -16,12 +16,43 @@ public class Mage extends RPGClass {
                 "Một pháp sư sử dụng sức mạnh phép thuật."
         );
 
+        // =========================
+        // CLASS STATS
+        // =========================
+
+        addStatModifier(
+                new StatModifier(
+                        "class_mage_magic_attack",
+                        StatType.MAGIC_ATTACK,
+                        ModifierType.FLAT,
+                        10
+                )
+        );
+
+        addStatModifier(
+                new StatModifier(
+                        "class_mage_magic_defense",
+                        StatType.MAGIC_DEFENSE,
+                        ModifierType.FLAT,
+                        5
+                )
+        );
+
         addStatModifier(
                 new StatModifier(
                         "class_mage_mana",
                         StatType.MAX_MANA,
                         ModifierType.FLAT,
                         50
+                )
+        );
+
+        addStatModifier(
+                new StatModifier(
+                        "class_mage_crit",
+                        StatType.CRIT_CHANCE,
+                        ModifierType.FLAT,
+                        5
                 )
         );
 
@@ -34,6 +65,12 @@ public class Mage extends RPGClass {
                 )
         );
 
-        addSkill(new Fireball());
+        // =========================
+        // SKILLS
+        // =========================
+
+        addSkill(
+                new Fireball()
+        );
     }
 }

@@ -1,110 +1,271 @@
 package dungnt.rpg;
 
 import dungnt.rpg.classsystem.ClassManager;
-import dungnt.rpg.combat.*;
+import dungnt.rpg.combat.CombatService;
+import dungnt.rpg.combat.DamageCalculator;
+import dungnt.rpg.combat.DamageListener;
+import dungnt.rpg.combat.FloatingDamage;
+import dungnt.rpg.combat.RPGCombatListener;
+import dungnt.rpg.combat.RPGMobCombatListener;
+
 import dungnt.rpg.command.ClassCommand;
+import dungnt.rpg.command.LevelCommand;
 import dungnt.rpg.command.MagicDamageTestCommand;
 import dungnt.rpg.command.MobTestCommand;
 import dungnt.rpg.command.SkillCommand;
+
 import dungnt.rpg.mob.MobManager;
 import dungnt.rpg.mob.MobStatsManager;
+
 import dungnt.rpg.player.PlayerManager;
+
 import dungnt.rpg.skills.CooldownManager;
+import dungnt.rpg.skills.FireballListener;
 import dungnt.rpg.skills.SkillManager;
 import dungnt.rpg.skills.SkillService;
+
 import dungnt.rpg.stats.StatManager;
 import dungnt.rpg.stats.StatTestCommand;
+
+import dungnt.rpg.level.LevelManager;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MyRPG extends JavaPlugin {
 
+    // ==================================================
+    // SKILL
+    // ==================================================
+
     private SkillManager skillManager;
     private SkillService skillService;
-
     private CooldownManager cooldownManager;
+
+    // ==================================================
+    // CLASS
+    // ==================================================
+
     private ClassManager classManager;
 
+    // ==================================================
+    // PLAYER
+    // ==================================================
+
     private PlayerManager playerManager;
+
+    // ==================================================
+    // COMBAT
+    // ==================================================
+
     private DamageCalculator damageCalculator;
     private CombatService combatService;
+    private FloatingDamage floatingDamage;
+
+    // ==================================================
+    // STATS
+    // ==================================================
 
     private StatManager statManager;
+
+    // ==================================================
+    // LEVEL
+    // ==================================================
+
+    private LevelManager levelManager;
+
+    // ==================================================
+    // MOB
+    // ==================================================
 
     private MobStatsManager mobStatsManager;
     private MobManager mobManager;
 
+    // ==================================================
+    // ENABLE
+    // ==================================================
+
     @Override
     public void onEnable() {
 
-        // Managers
-        classManager = new ClassManager();
-        playerManager = new PlayerManager();
+        // ==================================================
+        // MANAGERS
+        // ==================================================
 
-        skillManager = new SkillManager();
-        cooldownManager = new CooldownManager();
+        classManager =
+                new ClassManager();
 
-        statManager = new StatManager();
+        playerManager =
+                new PlayerManager();
 
-        damageCalculator = new DamageCalculator();
+        skillManager =
+                new SkillManager();
 
-        combatService = new CombatService(this);
+        cooldownManager =
+                new CooldownManager();
 
-        skillService = new SkillService(this);
+        statManager =
+                new StatManager();
 
-        mobStatsManager = new MobStatsManager();
-        mobManager = new MobManager();
+        damageCalculator =
+                new DamageCalculator();
 
-        getServer().getPluginManager().registerEvents(
-                new DamageListener(),
-                this
-        );
+        mobStatsManager =
+                new MobStatsManager();
 
-        getServer().getPluginManager().registerEvents(
-                new RPGCombatListener(this),
-                this
-        );
+        mobManager =
+                new MobManager();
 
-        getServer().getPluginManager().registerEvents(
-                new RPGMobCombatListener(this),
-                this
-        );
+        // ==================================================
+        // LEVEL
+        // ==================================================
 
-        // Commands
-        getCommand("class").setExecutor(
-                new ClassCommand(this)
-        );
+        levelManager =
+                new LevelManager(this);
 
-        getCommand("skilltest").setExecutor(
-                new SkillCommand(this)
-        );
+        // ==================================================
+        // COMBAT
+        // ==================================================
 
-        getCommand("stattest")
-                .setExecutor(
-                        new StatTestCommand(this)
+        floatingDamage =
+                new FloatingDamage(this);
+
+        combatService =
+                new CombatService(this);
+
+        // ==================================================
+        // SKILL SERVICE
+        // ==================================================
+
+        skillService =
+                new SkillService(this);
+
+        // ==================================================
+        // EVENTS
+        // ==================================================
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new DamageListener(),
+                        this
                 );
 
-        getCommand("mobtest")
-                .setExecutor(
-                        new MobTestCommand(this)
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new FireballListener(this),
+                        this
                 );
 
-        getCommand("magicdamage")
-                .setExecutor(
-                        new MagicDamageTestCommand(this)
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new RPGCombatListener(this),
+                        this
                 );
 
-        getLogger().info("================================");
-        getLogger().info("       DungNT RPG ENABLED");
-        getLogger().info("================================");
-        getLogger().info("Registered Classes: "
-                + classManager.getClasses().size());
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new RPGMobCombatListener(this),
+                        this
+                );
+
+        // ==================================================
+        // COMMANDS
+        // ==================================================
+
+        if (getCommand("class") != null) {
+
+            getCommand("class")
+                    .setExecutor(
+                            new ClassCommand(this)
+                    );
+        }
+
+        if (getCommand("skilltest") != null) {
+
+            getCommand("skilltest")
+                    .setExecutor(
+                            new SkillCommand(this)
+                    );
+        }
+
+        if (getCommand("stattest") != null) {
+
+            getCommand("stattest")
+                    .setExecutor(
+                            new StatTestCommand(this)
+                    );
+        }
+
+        if (getCommand("mobtest") != null) {
+
+            getCommand("mobtest")
+                    .setExecutor(
+                            new MobTestCommand(this)
+                    );
+        }
+
+        if (getCommand("magicdamage") != null) {
+
+            getCommand("magicdamage")
+                    .setExecutor(
+                            new MagicDamageTestCommand(this)
+                    );
+        }
+
+        // ==================================================
+        // LEVEL COMMAND
+        // ==================================================
+
+        if (getCommand("level") != null) {
+
+            getCommand("level")
+                    .setExecutor(
+                            new LevelCommand(this)
+                    );
+        }
+
+        // ==================================================
+        // LOG
+        // ==================================================
+
+        getLogger().info(
+                "================================"
+        );
+
+        getLogger().info(
+                "       DungNT RPG ENABLED"
+        );
+
+        getLogger().info(
+                "================================"
+        );
+
+        getLogger().info(
+                "Registered Classes: "
+                        + classManager
+                        .getClasses()
+                        .size()
+        );
     }
+
+    // ==================================================
+    // DISABLE
+    // ==================================================
 
     @Override
     public void onDisable() {
 
-        getLogger().info("DungNT RPG DISABLED");
+        getLogger().info(
+                "DungNT RPG DISABLED"
+        );
     }
+
+    // ==================================================
+    // GETTERS
+    // ==================================================
 
     public ClassManager getClassManager() {
         return classManager;
@@ -134,8 +295,16 @@ public final class MyRPG extends JavaPlugin {
         return combatService;
     }
 
+    public FloatingDamage getFloatingDamage() {
+        return floatingDamage;
+    }
+
     public StatManager getStatManager() {
         return statManager;
+    }
+
+    public LevelManager getLevelManager() {
+        return levelManager;
     }
 
     public MobStatsManager getMobStatsManager() {

@@ -8,16 +8,39 @@ public class SkillService {
 
     private final MyRPG plugin;
 
-    public SkillService(MyRPG plugin) {
+    public SkillService(
+            MyRPG plugin
+    ) {
+
         this.plugin = plugin;
     }
 
-    public boolean useSkill(Player player, String skillId) {
+    public boolean useSkill(
+            Player player,
+            String skillId
+    ) {
+
+        // ==================================================
+        // PLAYER DATA
+        // ==================================================
 
         PlayerData playerData =
-                plugin.getPlayerManager().getData(player);
+                plugin.getPlayerManager()
+                        .getData(player);
 
-        // 1. Kiểm tra Class
+        if (playerData == null) {
+
+            player.sendMessage(
+                    "§cKhông tìm thấy dữ liệu người chơi!"
+            );
+
+            return false;
+        }
+
+        // ==================================================
+        // CLASS
+        // ==================================================
+
         if (playerData.getRpgClass() == null) {
 
             player.sendMessage(
@@ -27,9 +50,13 @@ public class SkillService {
             return false;
         }
 
-        // 2. Lấy skill từ Class
+        // ==================================================
+        // GET SKILL
+        // ==================================================
+
         Skill skill =
-                playerData.getRpgClass().getSkill(skillId);
+                playerData.getRpgClass()
+                        .getSkill(skillId);
 
         if (skill == null) {
 
@@ -40,32 +67,45 @@ public class SkillService {
             return false;
         }
 
-        // 3. Kiểm tra cooldown
-        if (plugin.getCooldownManager().isOnCooldown(
-                player.getUniqueId(),
-                skill.getId()
-        )) {
+        // ==================================================
+        // COOLDOWN
+        // ==================================================
+
+        if (plugin.getCooldownManager()
+                .isOnCooldown(
+                        player.getUniqueId(),
+                        skill.getId()
+                )) {
 
             long remaining =
-                    plugin.getCooldownManager().getRemaining(
-                            player.getUniqueId(),
-                            skill.getId()
-                    );
+                    plugin.getCooldownManager()
+                            .getRemaining(
+                                    player.getUniqueId(),
+                                    skill.getId()
+                            );
 
             double seconds =
                     remaining / 1000.0;
 
             player.sendMessage(
                     "§cSkill đang cooldown: §e"
-                            + String.format("%.1f", seconds)
+                            + String.format(
+                            "%.1f",
+                            seconds
+                    )
                             + "s"
             );
 
             return false;
         }
 
-        // 4. Kiểm tra Mana
-        if (!playerData.useMana(skill.getManaCost())) {
+        // ==================================================
+        // MANA
+        // ==================================================
+
+        if (!playerData.useMana(
+                skill.getManaCost()
+        )) {
 
             player.sendMessage(
                     "§cBạn không đủ Mana!"
@@ -74,24 +114,35 @@ public class SkillService {
             return false;
         }
 
-        // 5. Tạo Context
+        // ==================================================
+        // CONTEXT
+        // ==================================================
+
         SkillContext context =
                 new SkillContext(
+                        plugin,
                         player,
                         playerData,
                         skill,
                         plugin.getCombatService()
                 );
 
-        // 6. Execute
+        // ==================================================
+        // EXECUTE
+        // ==================================================
+
         skill.execute(context);
 
-        // 7. Bắt đầu cooldown
-        plugin.getCooldownManager().setCooldown(
-                player.getUniqueId(),
-                skill.getId(),
-                skill.getCooldown()
-        );
+        // ==================================================
+        // COOLDOWN
+        // ==================================================
+
+        plugin.getCooldownManager()
+                .setCooldown(
+                        player.getUniqueId(),
+                        skill.getId(),
+                        skill.getCooldown()
+                );
 
         return true;
     }

@@ -14,9 +14,21 @@ public class MobStatsManager {
     }
 
     public MobStats getOrCreate(UUID uuid) {
+
         return stats.computeIfAbsent(
                 uuid,
                 key -> new MobStats()
+        );
+    }
+
+    public void setStats(
+            UUID uuid,
+            MobStats mobStats
+    ) {
+
+        stats.put(
+                uuid,
+                mobStats
         );
     }
 
@@ -26,5 +38,9 @@ public class MobStatsManager {
 
     public boolean hasStats(UUID uuid) {
         return stats.containsKey(uuid);
+    }
+
+    public void clear() {
+        stats.clear();
     }
 }

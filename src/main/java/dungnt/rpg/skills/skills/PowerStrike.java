@@ -22,15 +22,17 @@ public class PowerStrike extends Skill {
     @Override
     public void execute(SkillContext context) {
 
-        Player player = context.getPlayer();
+        Player player =
+                context.getPlayer();
 
         RayTraceResult result =
                 player.getWorld().rayTraceEntities(
                         player.getEyeLocation(),
                         player.getEyeLocation().getDirection(),
                         4,
-                        entity -> entity instanceof LivingEntity
-                                && entity != player
+                        entity ->
+                                entity instanceof LivingEntity
+                                        && entity != player
                 );
 
         if (result == null) {
@@ -48,9 +50,12 @@ public class PowerStrike extends Skill {
             return;
         }
 
+        // =========================
+        // POWER STRIKE
+        // =========================
+
         DamageResult damageResult =
-                context.getCombatService().damage(
-                        player,
+                context.damage(
                         target,
                         1.5
                 );

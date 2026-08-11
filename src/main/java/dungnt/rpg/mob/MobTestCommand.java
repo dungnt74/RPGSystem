@@ -36,7 +36,10 @@ public class MobTestCommand implements CommandExecutor {
             return true;
         }
 
-        // Spawn trước mặt player
+        // =========================
+        // SPAWN
+        // =========================
+
         Location location =
                 player.getLocation()
                         .add(
@@ -61,8 +64,12 @@ public class MobTestCommand implements CommandExecutor {
                 new MobStats();
 
         stats.setMaxHealth(50);
+
         stats.setAttack(8);
+
         stats.setDefense(5);
+
+        stats.setMagicDefense(10);
 
         // =========================
         // MOB DATA
@@ -76,7 +83,7 @@ public class MobTestCommand implements CommandExecutor {
                 );
 
         // =========================
-        // REGISTER
+        // REGISTER MOB
         // =========================
 
         plugin.getMobManager()
@@ -85,9 +92,31 @@ public class MobTestCommand implements CommandExecutor {
                         mobData
                 );
 
-        // Đặt HP Minecraft = 50
-        zombie.setMaxHealth(50);
-        zombie.setHealth(50);
+        // =========================
+        // REGISTER STATS
+        // =========================
+
+        plugin.getMobStatsManager()
+                .setStats(
+                        zombie.getUniqueId(),
+                        stats
+                );
+
+        // =========================
+        // MINECRAFT HP
+        // =========================
+
+        zombie.setMaxHealth(
+                stats.getMaxHealth()
+        );
+
+        zombie.setHealth(
+                stats.getMaxHealth()
+        );
+
+        // =========================
+        // MESSAGE
+        // =========================
 
         player.sendMessage(
                 ChatColor.GREEN +
@@ -113,6 +142,13 @@ public class MobTestCommand implements CommandExecutor {
                         "🛡 Defense: " +
                         ChatColor.WHITE +
                         stats.getDefense()
+        );
+
+        player.sendMessage(
+                ChatColor.DARK_PURPLE +
+                        "✨ Magic Defense: " +
+                        ChatColor.WHITE +
+                        stats.getMagicDefense()
         );
 
         player.sendMessage(
