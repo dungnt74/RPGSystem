@@ -2,13 +2,10 @@ package dungnt.rpg.classsystem;
 
 import dungnt.rpg.skills.Skill;
 import dungnt.rpg.stats.StatModifier;
-import dungnt.rpg.stats.StatType;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 public abstract class RPGClass {
 
@@ -22,25 +19,18 @@ public abstract class RPGClass {
     private final List<StatModifier> statModifiers =
             new ArrayList<>();
 
-    /*
-     * Bonus riêng theo level của Class.
-     */
-    private final ClassLevelBonus levelBonus =
-            new ClassLevelBonus();
-
     protected RPGClass(
             String id,
             String name,
             String description
     ) {
-
         this.id = id;
         this.name = name;
         this.description = description;
     }
 
     // ==================================================
-    // BASIC INFO
+    // BASIC
     // ==================================================
 
     public String getId() {
@@ -59,7 +49,9 @@ public abstract class RPGClass {
     // SKILLS
     // ==================================================
 
-    public void addSkill(Skill skill) {
+    public void addSkill(
+            Skill skill
+    ) {
 
         if (skill == null) {
             return;
@@ -108,7 +100,7 @@ public abstract class RPGClass {
     }
 
     // ==================================================
-    // STATIC CLASS STATS
+    // CLASS STATS
     // ==================================================
 
     public void addStatModifier(
@@ -119,6 +111,15 @@ public abstract class RPGClass {
             return;
         }
 
+        // Không cho trùng ID
+        statModifiers.removeIf(
+                existing ->
+                        existing.getId()
+                                .equalsIgnoreCase(
+                                        modifier.getId()
+                                )
+        );
+
         statModifiers.add(modifier);
     }
 
@@ -127,65 +128,5 @@ public abstract class RPGClass {
         return Collections.unmodifiableList(
                 statModifiers
         );
-    }
-
-    // ==================================================
-    // LEVEL BONUS
-    // ==================================================
-
-    public ClassLevelBonus getLevelBonus() {
-        return levelBonus;
-    }
-
-    /**
-     * Thiết lập bonus stat theo mỗi level.
-     *
-     * Ví dụ:
-     *
-     * addLevelBonus(
-     *     StatType.ATTACK,
-     *     2
-     * );
-     *
-     * Level 1 = +0
-     * Level 2 = +2
-     * Level 3 = +4
-     * Level 10 = +18
-     */
-    protected void addLevelBonus(
-            StatType stat,
-            double amountPerLevel
-    ) {
-
-        if (stat == null) {
-            return;
-        }
-
-        levelBonus.add(
-                stat,
-                amountPerLevel
-        );
-    }
-
-    /**
-     * Lấy bonus của một stat tại level hiện tại.
-     */
-    public double getLevelBonus(
-            StatType stat,
-            int level
-    ) {
-
-        return levelBonus.getBonus(
-                stat,
-                level
-        );
-    }
-
-    /**
-     * Lấy toàn bộ level bonus.
-     */
-    public Map<StatType, Double> getLevelBonuses() {
-
-        return levelBonus.getBonuses();
     }
 }

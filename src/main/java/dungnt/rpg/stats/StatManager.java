@@ -1,7 +1,6 @@
 package dungnt.rpg.stats;
 
 import dungnt.rpg.classsystem.RPGClass;
-import dungnt.rpg.player.PlayerData;
 
 import java.util.*;
 
@@ -19,17 +18,23 @@ public class StatManager {
             StatModifier modifier
     ) {
 
+        if (uuid == null || modifier == null) {
+            return;
+        }
+
         List<StatModifier> list =
                 modifiers.computeIfAbsent(
                         uuid,
                         key -> new ArrayList<>()
                 );
 
-        // Nếu ID trùng thì thay modifier cũ
+        // Modifier cùng ID sẽ replace modifier cũ
         list.removeIf(
                 existing ->
                         existing.getId()
-                                .equals(modifier.getId())
+                                .equalsIgnoreCase(
+                                        modifier.getId()
+                                )
         );
 
         list.add(modifier);
@@ -44,6 +49,10 @@ public class StatManager {
             String modifierId
     ) {
 
+        if (uuid == null || modifierId == null) {
+            return;
+        }
+
         List<StatModifier> list =
                 modifiers.get(uuid);
 
@@ -54,12 +63,75 @@ public class StatManager {
         list.removeIf(
                 modifier ->
                         modifier.getId()
-                                .equals(modifierId)
+                                .equalsIgnoreCase(
+                                        modifierId
+                                )
         );
 
         if (list.isEmpty()) {
             modifiers.remove(uuid);
         }
+    }
+
+    // ==================================================
+    // APPLY CLASS
+    // ==================================================
+
+    public void applyClass(
+            UUID uuid,
+            RPGClass rpgClass
+    ) {
+
+        if (uuid == null || rpgClass == null) {
+            return;
+        }
+
+        for (StatModifier modifier :
+                rpgClass.getStatModifiers()) {
+
+            addModifier(
+                    uuid,
+                    modifier
+            );
+        }
+    }
+
+    // ==================================================
+    // REMOVE CLASS
+    // ==================================================
+
+    public void removeClass(
+            UUID uuid,
+            RPGClass rpgClass
+    ) {
+
+        if (uuid == null || rpgClass == null) {
+            return;
+        }
+
+        for (StatModifier modifier :
+                rpgClass.getStatModifiers()) {
+
+            removeModifier(
+                    uuid,
+                    modifier.getId()
+            );
+        }
+    }
+
+    // ==================================================
+    // CLEAR
+    // ==================================================
+
+    public void clearModifiers(
+            UUID uuid
+    ) {
+
+        if (uuid == null) {
+            return;
+        }
+
+        modifiers.remove(uuid);
     }
 
     // ==================================================
@@ -71,6 +143,10 @@ public class StatManager {
             StatsContainer baseStats,
             StatType type
     ) {
+
+        if (baseStats == null || type == null) {
+            return 0.0;
+        }
 
         double baseValue =
                 getBaseStat(
@@ -86,7 +162,8 @@ public class StatManager {
 
         if (list != null) {
 
-            for (StatModifier modifier : list) {
+            for (StatModifier modifier :
+                    list) {
 
                 if (modifier.getType() != type) {
                     continue;
@@ -113,246 +190,14 @@ public class StatManager {
                 baseValue + flatBonus;
 
         finalValue *=
-                1.0 + (percentBonus / 100.0);
+                1.0
+                        + (
+                        percentBonus / 100.0
+                );
 
-        return finalValue;
-    }
-
-    // ==================================================
-    // GET PLAYER STAT
-    //
-    // Đây là hàm mới.
-    //
-    // Nó lấy:
-    //
-    // Base Stat
-    // + Class Stat
-    // + Level Stat
-    // + Equipment Stat sau này
-    //
-    // ==================================================
-
-    public double getPlayerStat(
-            PlayerData playerData,
-            StatType type
-    ) {
-
-        if (playerData == null) {
-            return 0.0;
-        }
-
-        return getStat(
-                playerData.getUuid(),
-                playerData.getStats(),
-                type
-        );
-    }
-
-    // ==================================================
-    // ADD CLASS MODIFIERS
-    // ==================================================
-
-    public void applyClassModifiers(
-            PlayerData playerData
-    ) {
-
-        if (playerData == null) {
-            return;
-        }
-
-        UUID uuid =
-                playerData.getUuid();
-
-        // Xóa modifier class cũ
-        removeClassModifiers(uuid);
-
-        RPGClass rpgClass =
-                playerData.getRpgClass();
-
-        if (rpgClass == null) {
-            return;
-        }
-
-        for (StatModifier modifier :
-                rpgClass.getStatModifiers()) {
-
-            addModifier(
-                    uuid,
-                    modifier
-            );
-        }
-    }
-
-    // ==================================================
-    // REMOVE CLASS MODIFIERS
-    // ==================================================
-
-    private void removeClassModifiers(
-            UUID uuid
-    ) {
-
-        List<StatModifier> list =
-                modifiers.get(uuid);
-
-        if (list == null) {
-            return;
-        }
-
-        list.removeIf(
-                modifier ->
-                        modifier.getId()
-                                .startsWith("class_")
-        );
-
-        if (list.isEmpty()) {
-            modifiers.remove(uuid);
-        }
-    }
-
-    // ==================================================
-    // LEVEL STAT
-    // ==================================================
-
-    public void applyLevelModifiers(
-            PlayerData playerData
-    ) {
-
-        if (playerData == null) {
-            return;
-        }
-
-        UUID uuid =
-                playerData.getUuid();
-
-        // Xóa level modifier cũ
-        removeLevelModifiers(uuid);
-
-        int level =
-                playerData.getLevel();
-
-        if (level <= 1) {
-            return;
-        }
-
-        /*
-         * Mỗi level tăng:
-         *
-         * +2 Attack
-         * +1 Magic Attack
-         * +1 Defense
-         * +1 Magic Defense
-         * +2 Max Health
-         * +2 Max Mana
-         */
-
-        int bonusLevels =
-                level - 1;
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_attack",
-                        StatType.ATTACK,
-                        ModifierType.FLAT,
-                        bonusLevels * 2.0
-                )
-        );
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_magic_attack",
-                        StatType.MAGIC_ATTACK,
-                        ModifierType.FLAT,
-                        bonusLevels * 1.0
-                )
-        );
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_defense",
-                        StatType.DEFENSE,
-                        ModifierType.FLAT,
-                        bonusLevels * 1.0
-                )
-        );
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_magic_defense",
-                        StatType.MAGIC_DEFENSE,
-                        ModifierType.FLAT,
-                        bonusLevels * 1.0
-                )
-        );
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_max_health",
-                        StatType.MAX_HEALTH,
-                        ModifierType.FLAT,
-                        bonusLevels * 2.0
-                )
-        );
-
-        addModifier(
-                uuid,
-                new StatModifier(
-                        "level_max_mana",
-                        StatType.MAX_MANA,
-                        ModifierType.FLAT,
-                        bonusLevels * 2.0
-                )
-        );
-    }
-
-    // ==================================================
-    // REMOVE LEVEL MODIFIERS
-    // ==================================================
-
-    private void removeLevelModifiers(
-            UUID uuid
-    ) {
-
-        List<StatModifier> list =
-                modifiers.get(uuid);
-
-        if (list == null) {
-            return;
-        }
-
-        list.removeIf(
-                modifier ->
-                        modifier.getId()
-                                .startsWith("level_")
-        );
-
-        if (list.isEmpty()) {
-            modifiers.remove(uuid);
-        }
-    }
-
-    // ==================================================
-    // APPLY ALL
-    // ==================================================
-
-    public void refreshPlayer(
-            PlayerData playerData
-    ) {
-
-        if (playerData == null) {
-            return;
-        }
-
-        applyClassModifiers(
-                playerData
-        );
-
-        applyLevelModifiers(
-                playerData
+        return Math.max(
+                0.0,
+                finalValue
         );
     }
 
@@ -398,7 +243,6 @@ public class StatManager {
             case SKILL_DAMAGE ->
                     stats.getSkillDamage();
 
-
             // =========================
             // DEFENSE
             // =========================
@@ -420,7 +264,6 @@ public class StatManager {
 
             case DODGE_CHANCE ->
                     stats.getDodgeChance();
-
 
             // =========================
             // HEALTH / MANA
@@ -447,14 +290,12 @@ public class StatManager {
             case COOLDOWN_REDUCTION ->
                     stats.getCooldownReduction();
 
-
             // =========================
             // MOVEMENT
             // =========================
 
             case MOVE_SPEED ->
                     stats.getMoveSpeed();
-
 
             // =========================
             // UTILITY
@@ -472,16 +313,5 @@ public class StatManager {
             case LUCK ->
                     stats.getLuck();
         };
-    }
-
-    // ==================================================
-    // CLEAR
-    // ==================================================
-
-    public void clearModifiers(
-            UUID uuid
-    ) {
-
-        modifiers.remove(uuid);
     }
 }

@@ -1,6 +1,7 @@
 package dungnt.rpg.level;
 
 import dungnt.rpg.MyRPG;
+import dungnt.rpg.classsystem.ClassLevelBonus;
 import dungnt.rpg.player.PlayerData;
 import org.bukkit.entity.Player;
 
@@ -9,13 +10,11 @@ public class LevelManager {
     private final MyRPG plugin;
 
     // ==================================================
-    // CONFIG
+    // EXP CONFIG
     // ==================================================
 
-    // EXP cần ở Level 1 -> Level 2
     private final double baseExperience = 100.0;
 
-    // Mỗi level tăng thêm 25%
     private final double experienceMultiplier = 1.25;
 
     // ==================================================
@@ -23,6 +22,7 @@ public class LevelManager {
     // ==================================================
 
     public LevelManager(MyRPG plugin) {
+
         this.plugin = plugin;
     }
 
@@ -49,7 +49,10 @@ public class LevelManager {
 
         data.addExperience(amount);
 
-        checkLevelUp(player, data);
+        checkLevelUp(
+                player,
+                data
+        );
     }
 
     // ==================================================
@@ -63,30 +66,49 @@ public class LevelManager {
 
         while (true) {
 
-            int level =
+            int currentLevel =
                     data.getLevel();
 
             double required =
-                    getRequiredExperience(level);
+                    getRequiredExperience(
+                            currentLevel
+                    );
 
             if (data.getExperience() < required) {
                 break;
             }
 
-            // Trừ EXP cần thiết
+            // ==================================================
+            // REMOVE REQUIRED EXP
+            // ==================================================
+
             data.setExperience(
                     data.getExperience() - required
             );
 
-            // Tăng level
-            int newLevel =
-                    level + 1;
-
-            data.setLevel(newLevel);
-
-            // ==========================================
+            // ==================================================
             // LEVEL UP
-            // ==========================================
+            // ==================================================
+
+            int newLevel =
+                    currentLevel + 1;
+
+            data.setLevel(
+                    newLevel
+            );
+
+            // ==================================================
+            // APPLY CLASS LEVEL BONUS
+            // ==================================================
+
+            applyClassBonus(
+                    player,
+                    data
+            );
+
+            // ==================================================
+            // MESSAGE
+            // ==================================================
 
             player.sendMessage(
                     "§6§l✦ LEVEL UP!"
@@ -97,19 +119,44 @@ public class LevelManager {
                             + newLevel
             );
 
-            // ==========================================
-            // SAU NÀY SẼ THÊM:
-            //
-            // - Class level bonus
-            // - Stat bonus
-            // - Skill unlock
-            // - Equipment update
-            // ==========================================
+            if (data.getRpgClass() != null) {
+
+                player.sendMessage(
+                        "§7Class: §b"
+                                + data.getRpgClass()
+                                .getName()
+                );
+
+                player.sendMessage(
+                        "§a✦ Chỉ số Class đã được tăng!"
+                );
+            }
         }
     }
 
     // ==================================================
-    // GET REQUIRED EXP
+    // APPLY CLASS BONUS
+    // ==================================================
+
+    private void applyClassBonus(
+            Player player,
+            PlayerData data
+    ) {
+
+        if (data.getRpgClass() == null) {
+            return;
+        }
+
+        ClassLevelBonus.apply(
+                player.getUniqueId(),
+                data.getRpgClass(),
+                data.getLevel(),
+                plugin.getStatManager()
+        );
+    }
+
+    // ==================================================
+    // REQUIRED EXP
     // ==================================================
 
     public double getRequiredExperience(
@@ -128,7 +175,7 @@ public class LevelManager {
     }
 
     // ==================================================
-    // GET REQUIRED EXP FROM PLAYER
+    // REQUIRED EXP - PLAYER
     // ==================================================
 
     public double getRequiredExperience(
@@ -177,14 +224,31 @@ public class LevelManager {
             return;
         }
 
+        // ==================================================
+        // SET LEVEL
+        // ==================================================
+
         data.setLevel(level);
 
-        // Reset EXP khi set level
+        // Reset EXP
         data.setExperience(0);
+
+        // ==================================================
+        // APPLY CLASS BONUS
+        // ==================================================
+
+        applyClassBonus(
+                player,
+                data
+        );
 
         player.sendMessage(
                 "§aLevel của bạn đã được đặt thành §e"
                         + level
+        );
+
+        player.sendMessage(
+                "§a✦ Class level bonus đã được cập nhật."
         );
     }
 
@@ -212,7 +276,7 @@ public class LevelManager {
     }
 
     // ==================================================
-    // GET CURRENT EXP
+    // GET EXP
     // ==================================================
 
     public double getExperience(
@@ -235,7 +299,7 @@ public class LevelManager {
     }
 
     // ==================================================
-    // GET EXP %
+    // EXP PERCENTAGE
     // ==================================================
 
     public double getExperiencePercentage(

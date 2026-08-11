@@ -51,6 +51,14 @@ public class LevelCommand implements CommandExecutor {
                 plugin.getPlayerManager()
                         .getData(player);
 
+        if (data == null) {
+            player.sendMessage(
+                    "§cKhông tìm thấy PlayerData."
+            );
+
+            return true;
+        }
+
         // ==================================================
         // /LEVEL
         // ==================================================
@@ -171,16 +179,11 @@ public class LevelCommand implements CommandExecutor {
                     level
             );
 
-            player.sendMessage(
-                    "§aĐã set Level thành §e"
-                            + level
-            );
-
             return true;
         }
 
         // ==================================================
-        // UNKNOWN COMMAND
+        // UNKNOWN
         // ==================================================
 
         player.sendMessage(
@@ -222,6 +225,11 @@ public class LevelCommand implements CommandExecutor {
                         player
                 );
 
+        double percentage =
+                levelManager.getExperiencePercentage(
+                        player
+                );
+
         player.sendMessage(
                 "§8§m--------------------------"
         );
@@ -247,18 +255,6 @@ public class LevelCommand implements CommandExecutor {
                         requiredExp
                 )
         );
-
-        double percentage =
-                requiredExp <= 0
-                        ? 100
-                        : (currentExp / requiredExp)
-                        * 100;
-
-        percentage =
-                Math.min(
-                        100,
-                        percentage
-                );
 
         player.sendMessage(
                 "§7Progress: §b"

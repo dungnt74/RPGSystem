@@ -95,7 +95,7 @@ public final class MyRPG extends JavaPlugin {
                 new ClassManager();
 
         playerManager =
-                new PlayerManager();
+                new PlayerManager(this);
 
         skillManager =
                 new SkillManager();

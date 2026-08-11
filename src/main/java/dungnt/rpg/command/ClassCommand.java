@@ -125,8 +125,11 @@ public class ClassCommand implements CommandExecutor {
             // SET CLASS MỚI
             // =========================
 
-            data.setRpgClass(rpgClass);
-
+            plugin.getPlayerManager()
+                    .setClass(
+                            player,
+                            rpgClass
+                    );
             // =========================
             // APPLY MODIFIER CLASS
             // =========================
