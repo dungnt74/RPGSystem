@@ -16,6 +16,10 @@ public class Archer extends RPGClass {
                 "Một xạ thủ chuyên chiến đấu từ khoảng cách xa."
         );
 
+        // =========================
+        // OFFENSE
+        // =========================
+
         addStatModifier(
                 new StatModifier(
                         "class_archer_attack",
@@ -30,10 +34,38 @@ public class Archer extends RPGClass {
                         "class_archer_crit",
                         StatType.CRIT_CHANCE,
                         ModifierType.FLAT,
-                        5
+                        10
                 )
         );
 
-        addSkill(new Dash());
+        addStatModifier(
+                new StatModifier(
+                        "class_archer_crit_damage",
+                        StatType.CRIT_DAMAGE,
+                        ModifierType.FLAT,
+                        0.25
+                )
+        );
+
+        // =========================
+        // MOVEMENT
+        // =========================
+
+        addStatModifier(
+                new StatModifier(
+                        "class_archer_speed",
+                        StatType.MOVE_SPEED,
+                        ModifierType.FLAT,
+                        0.05
+                )
+        );
+
+        // =========================
+        // SKILLS
+        // =========================
+
+        addSkill(
+                new Dash()
+        );
     }
 }

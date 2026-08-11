@@ -7,6 +7,10 @@ import dungnt.rpg.combat.DamageListener;
 import dungnt.rpg.combat.FloatingDamage;
 import dungnt.rpg.combat.RPGCombatListener;
 import dungnt.rpg.combat.RPGMobCombatListener;
+import dungnt.rpg.equipment.EquipmentItemManager;
+import dungnt.rpg.equipment.EquipmentLoreManager;
+import dungnt.rpg.equipment.EquipmentStatManager;
+import dungnt.rpg.equipment.EquipmentListener;
 
 import dungnt.rpg.command.ClassCommand;
 import dungnt.rpg.command.LevelCommand;
@@ -80,6 +84,9 @@ public final class MyRPG extends JavaPlugin {
     private MobStatsManager mobStatsManager;
     private MobManager mobManager;
 
+    private EquipmentStatManager equipmentStatManager;
+    private EquipmentItemManager equipmentItemManager;
+    private EquipmentLoreManager equipmentLoreManager;
     // ==================================================
     // ENABLE
     // ==================================================
@@ -105,6 +112,19 @@ public final class MyRPG extends JavaPlugin {
 
         statManager =
                 new StatManager();
+
+        equipmentItemManager =
+                new EquipmentItemManager(this);
+
+        equipmentLoreManager =
+                new EquipmentLoreManager(
+                        equipmentItemManager
+                );
+
+        equipmentStatManager =
+                new EquipmentStatManager(
+                        statManager
+                );
 
         damageCalculator =
                 new DamageCalculator();
@@ -168,6 +188,17 @@ public final class MyRPG extends JavaPlugin {
                 .getPluginManager()
                 .registerEvents(
                         new RPGMobCombatListener(this),
+                        this
+                );
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new EquipmentListener(
+                                this,
+                                statManager,
+                                equipmentItemManager
+                        ),
                         this
                 );
 
@@ -313,5 +344,17 @@ public final class MyRPG extends JavaPlugin {
 
     public MobManager getMobManager() {
         return mobManager;
+    }
+
+    public EquipmentStatManager getEquipmentStatManager() {
+        return equipmentStatManager;
+    }
+
+    public EquipmentItemManager getEquipmentItemManager() {
+        return equipmentItemManager;
+    }
+
+    public EquipmentLoreManager getEquipmentLoreManager() {
+        return equipmentLoreManager;
     }
 }

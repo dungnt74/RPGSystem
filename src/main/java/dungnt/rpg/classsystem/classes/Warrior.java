@@ -16,6 +16,10 @@ public class Warrior extends RPGClass {
                 "Một chiến binh mạnh mẽ chuyên chiến đấu cận chiến."
         );
 
+        // =========================
+        // OFFENSE
+        // =========================
+
         addStatModifier(
                 new StatModifier(
                         "class_warrior_attack",
@@ -27,12 +31,41 @@ public class Warrior extends RPGClass {
 
         addStatModifier(
                 new StatModifier(
+                        "class_warrior_crit_damage",
+                        StatType.CRIT_DAMAGE,
+                        ModifierType.FLAT,
+                        0.25
+                )
+        );
+
+        // =========================
+        // DEFENSE
+        // =========================
+
+        addStatModifier(
+                new StatModifier(
                         "class_warrior_defense",
                         StatType.DEFENSE,
                         ModifierType.FLAT,
                         10
                 )
         );
-        addSkill(new PowerStrike());
+
+        addStatModifier(
+                new StatModifier(
+                        "class_warrior_health",
+                        StatType.MAX_HEALTH,
+                        ModifierType.FLAT,
+                        20
+                )
+        );
+
+        // =========================
+        // SKILLS
+        // =========================
+
+        addSkill(
+                new PowerStrike()
+        );
     }
 }

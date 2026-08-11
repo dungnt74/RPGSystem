@@ -13,7 +13,7 @@ public final class ClassLevelBonus {
     }
 
     // ==================================================
-    // APPLY LEVEL BONUS
+    // APPLY
     // ==================================================
 
     public static void apply(
@@ -23,7 +23,9 @@ public final class ClassLevelBonus {
             StatManager statManager
     ) {
 
-        if (uuid == null || rpgClass == null) {
+        if (uuid == null ||
+                rpgClass == null ||
+                statManager == null) {
             return;
         }
 
@@ -31,72 +33,166 @@ public final class ClassLevelBonus {
             return;
         }
 
-        int bonusLevels =
+        double levels =
                 level - 1;
 
-        String classId =
-                rpgClass.getId();
+        String prefix =
+                "class_growth_" +
+                        rpgClass.getId() +
+                        "_";
 
-        // ==================================================
-        // MAGE
-        // ==================================================
+        switch (rpgClass.getId().toLowerCase()) {
 
-        if (classId.equalsIgnoreCase("mage")) {
+            // ==================================================
+            // WARRIOR
+            // ==================================================
 
-            // +5 Magic Attack / level
-            statManager.addModifier(
-                    uuid,
-                    new StatModifier(
-                            "level_" + classId + "_magic_attack",
-                            StatType.MAGIC_ATTACK,
-                            ModifierType.FLAT,
-                            5.0 * bonusLevels
-                    )
-            );
+            case "warrior" -> {
 
-            // +10 Max Mana / level
-            statManager.addModifier(
-                    uuid,
-                    new StatModifier(
-                            "level_" + classId + "_max_mana",
-                            StatType.MAX_MANA,
-                            ModifierType.FLAT,
-                            10.0 * bonusLevels
-                    )
-            );
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "attack",
+                        StatType.ATTACK,
+                        levels * 3.0
+                );
 
-            // +2 Magic Defense / level
-            statManager.addModifier(
-                    uuid,
-                    new StatModifier(
-                            "level_" + classId + "_magic_defense",
-                            StatType.MAGIC_DEFENSE,
-                            ModifierType.FLAT,
-                            2.0 * bonusLevels
-                    )
-            );
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "defense",
+                        StatType.DEFENSE,
+                        levels * 2.0
+                );
 
-            // +1% Skill Damage / level
-            statManager.addModifier(
-                    uuid,
-                    new StatModifier(
-                            "level_" + classId + "_skill_damage",
-                            StatType.SKILL_DAMAGE,
-                            ModifierType.FLAT,
-                            1.0 * bonusLevels
-                    )
-            );
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "health",
+                        StatType.MAX_HEALTH,
+                        levels * 8.0
+                );
+            }
+
+            // ==================================================
+            // MAGE
+            // ==================================================
+
+            case "mage" -> {
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "magic_attack",
+                        StatType.MAGIC_ATTACK,
+                        levels * 3.0
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "magic_defense",
+                        StatType.MAGIC_DEFENSE,
+                        levels * 1.5
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "mana",
+                        StatType.MAX_MANA,
+                        levels * 10.0
+                );
+            }
+
+            // ==================================================
+            // ARCHER
+            // ==================================================
+
+            case "archer" -> {
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "attack",
+                        StatType.ATTACK,
+                        levels * 2.5
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "crit",
+                        StatType.CRIT_CHANCE,
+                        levels * 0.5
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "attack_speed",
+                        StatType.ATTACK_SPEED,
+                        levels * 0.5
+                );
+            }
+
+            // ==================================================
+            // ASSASSIN
+            // ==================================================
+
+            case "assassin" -> {
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "attack",
+                        StatType.ATTACK,
+                        levels * 2.5
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "crit",
+                        StatType.CRIT_CHANCE,
+                        levels * 1.0
+                );
+
+                add(
+                        uuid,
+                        statManager,
+                        prefix + "dodge",
+                        StatType.DODGE_CHANCE,
+                        levels * 0.5
+                );
+            }
+        }
+    }
+
+    // ==================================================
+    // ADD
+    // ==================================================
+
+    private static void add(
+            UUID uuid,
+            StatManager statManager,
+            String id,
+            StatType type,
+            double amount
+    ) {
+
+        if (amount <= 0) {
+            return;
         }
 
-        // ==================================================
-        // SAU NÀY THÊM CLASS
-        // ==================================================
-        //
-        // warrior
-        // archer
-        // assassin
-        // tank
-        //
-        // ==================================================
+        statManager.addModifier(
+                uuid,
+                new StatModifier(
+                        id,
+                        type,
+                        ModifierType.FLAT,
+                        amount
+                )
+        );
     }
 }

@@ -30,10 +30,6 @@ public class LevelCommand implements CommandExecutor {
             String[] args
     ) {
 
-        // ==================================================
-        // CHỈ PLAYER
-        // ==================================================
-
         if (!(sender instanceof Player player)) {
 
             sender.sendMessage(
@@ -43,21 +39,9 @@ public class LevelCommand implements CommandExecutor {
             return true;
         }
 
-        // ==================================================
-        // DATA
-        // ==================================================
-
         PlayerData data =
                 plugin.getPlayerManager()
                         .getData(player);
-
-        if (data == null) {
-            player.sendMessage(
-                    "§cKhông tìm thấy PlayerData."
-            );
-
-            return true;
-        }
 
         // ==================================================
         // /LEVEL
@@ -120,15 +104,6 @@ public class LevelCommand implements CommandExecutor {
                     amount
             );
 
-            player.sendMessage(
-                    "§a+"
-                            + String.format(
-                            "%.1f",
-                            amount
-                    )
-                            + " EXP"
-            );
-
             return true;
         }
 
@@ -183,7 +158,7 @@ public class LevelCommand implements CommandExecutor {
         }
 
         // ==================================================
-        // UNKNOWN
+        // HELP
         // ==================================================
 
         player.sendMessage(

@@ -1,19 +1,19 @@
 package dungnt.rpg.classsystem.classes;
 
 import dungnt.rpg.classsystem.RPGClass;
-import dungnt.rpg.skills.skills.Fireball;
+import dungnt.rpg.skills.skills.Dash;
 import dungnt.rpg.stats.ModifierType;
 import dungnt.rpg.stats.StatModifier;
 import dungnt.rpg.stats.StatType;
 
-public class Mage extends RPGClass {
+public class Assassin extends RPGClass {
 
-    public Mage() {
+    public Assassin() {
 
         super(
-                "mage",
-                "Mage",
-                "Một pháp sư sử dụng sức mạnh phép thuật."
+                "assassin",
+                "Assassin",
+                "Một sát thủ nhanh nhẹn, chuyên gây sát thương chí mạng."
         );
 
         // =========================
@@ -22,26 +22,35 @@ public class Mage extends RPGClass {
 
         addStatModifier(
                 new StatModifier(
-                        "class_mage_magic_attack",
-                        StatType.MAGIC_ATTACK,
+                        "class_assassin_attack",
+                        StatType.ATTACK,
                         ModifierType.FLAT,
-                        10
+                        4
                 )
         );
 
         addStatModifier(
                 new StatModifier(
-                        "class_mage_skill_damage",
-                        StatType.SKILL_DAMAGE,
-                        ModifierType.PERCENT,
-                        10
-                )
-        );
-
-        addStatModifier(
-                new StatModifier(
-                        "class_mage_crit",
+                        "class_assassin_crit",
                         StatType.CRIT_CHANCE,
+                        ModifierType.FLAT,
+                        15
+                )
+        );
+
+        addStatModifier(
+                new StatModifier(
+                        "class_assassin_crit_damage",
+                        StatType.CRIT_DAMAGE,
+                        ModifierType.FLAT,
+                        0.50
+                )
+        );
+
+        addStatModifier(
+                new StatModifier(
+                        "class_assassin_armor_penetration",
+                        StatType.ARMOR_PENETRATION,
                         ModifierType.FLAT,
                         5
                 )
@@ -53,23 +62,23 @@ public class Mage extends RPGClass {
 
         addStatModifier(
                 new StatModifier(
-                        "class_mage_magic_defense",
-                        StatType.MAGIC_DEFENSE,
+                        "class_assassin_dodge",
+                        StatType.DODGE_CHANCE,
                         ModifierType.FLAT,
-                        5
+                        10
                 )
         );
 
         // =========================
-        // MANA
+        // MOVEMENT
         // =========================
 
         addStatModifier(
                 new StatModifier(
-                        "class_mage_mana",
-                        StatType.MAX_MANA,
+                        "class_assassin_speed",
+                        StatType.MOVE_SPEED,
                         ModifierType.FLAT,
-                        50
+                        0.10
                 )
         );
 
@@ -78,7 +87,7 @@ public class Mage extends RPGClass {
         // =========================
 
         addSkill(
-                new Fireball()
+                new Dash()
         );
     }
 }

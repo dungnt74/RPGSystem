@@ -3,7 +3,7 @@ package dungnt.rpg.command;
 import dungnt.rpg.MyRPG;
 import dungnt.rpg.classsystem.RPGClass;
 import dungnt.rpg.player.PlayerData;
-import dungnt.rpg.stats.StatModifier;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,7 +29,7 @@ public class ClassCommand implements CommandExecutor {
         if (!(sender instanceof Player player)) {
 
             sender.sendMessage(
-                    "Chỉ người chơi mới sử dụng được command này."
+                    "§cChỉ Player mới sử dụng được lệnh này."
             );
 
             return true;
@@ -39,135 +39,188 @@ public class ClassCommand implements CommandExecutor {
                 plugin.getPlayerManager()
                         .getData(player);
 
-        if (data == null) {
-
-            player.sendMessage(
-                    ChatColor.RED +
-                            "Không tìm thấy dữ liệu người chơi."
-            );
-
-            return true;
-        }
-
-        // =========================
-        // /class
-        // =========================
+        // ==================================================
+        // /CLASS
+        // ==================================================
 
         if (args.length == 0) {
 
             if (data.getRpgClass() == null) {
 
                 player.sendMessage(
-                        ChatColor.YELLOW +
-                                "Bạn chưa chọn Class."
+                        "§eBạn chưa chọn Class."
                 );
 
                 player.sendMessage(
-                        ChatColor.GRAY +
-                                "Sử dụng: /class choose <warrior/mage/archer>"
+                        "§7Các Class:"
                 );
-
-            } else {
 
                 player.sendMessage(
-                        ChatColor.GREEN +
-                                "Class hiện tại: " +
-                                ChatColor.GOLD +
-                                data.getRpgClass().getName()
+                        "§cWarrior §7| §dMage §7| §aArcher §7| §5Assassin"
                 );
+
+                player.sendMessage(
+                        "§7Dùng: §e/class choose <class>"
+                );
+
+                return true;
             }
+
+            RPGClass rpgClass =
+                    data.getRpgClass();
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
+
+            player.sendMessage(
+                    "§6§l✦ CLASS"
+            );
+
+            player.sendMessage(
+                    "§7Class: §e"
+                            + rpgClass.getName()
+            );
+
+            player.sendMessage(
+                    "§7"
+                            + rpgClass.getDescription()
+            );
+
+            player.sendMessage(
+                    "§7Skills: §f"
+                            + rpgClass.getSkills().size()
+            );
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
 
             return true;
         }
 
-        // =========================
-        // /class choose <class>
-        // =========================
+        // ==================================================
+        // /CLASS LIST
+        // ==================================================
+
+        if (args[0].equalsIgnoreCase("list")) {
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
+
+            player.sendMessage(
+                    "§6§l✦ RPG CLASSES"
+            );
+
+            for (RPGClass rpgClass :
+                    plugin.getClassManager()
+                            .getClasses()) {
+
+                player.sendMessage(
+                        "§e"
+                                + rpgClass.getId()
+                                + " §7- §f"
+                                + rpgClass.getName()
+                );
+            }
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
+
+            return true;
+        }
+
+        // ==================================================
+        // /CLASS CHOOSE
+        // ==================================================
 
         if (args[0].equalsIgnoreCase("choose")) {
 
             if (args.length < 2) {
 
                 player.sendMessage(
-                        ChatColor.RED +
-                                "Sử dụng: /class choose <class>"
+                        "§cDùng: §e/class choose <warrior|mage|archer|assassin>"
                 );
 
                 return true;
             }
 
-            String classId = args[1];
-
             RPGClass rpgClass =
                     plugin.getClassManager()
-                            .getClass(classId);
+                            .getClass(args[1]);
 
             if (rpgClass == null) {
 
                 player.sendMessage(
-                        ChatColor.RED +
-                                "Class không tồn tại!"
+                        "§cClass không tồn tại!"
+                );
+
+                player.sendMessage(
+                        "§7Warrior, Mage, Archer, Assassin"
                 );
 
                 return true;
             }
 
-            // =========================
-            // XÓA MODIFIER CLASS CŨ
-            // =========================
-
-            plugin.getStatManager()
-                    .clearModifiers(
-                            player.getUniqueId()
-                    );
-
-            // =========================
-            // SET CLASS MỚI
-            // =========================
+            // ==================================================
+            // SET CLASS
+            // ==================================================
 
             plugin.getPlayerManager()
                     .setClass(
                             player,
                             rpgClass
                     );
-            // =========================
-            // APPLY MODIFIER CLASS
-            // =========================
 
-            for (StatModifier modifier :
-                    rpgClass.getStatModifiers()) {
-
-                plugin.getStatManager()
-                        .addModifier(
-                                player.getUniqueId(),
-                                modifier
-                        );
-            }
-
-            // =========================
-            // THÔNG BÁO
-            // =========================
+            // ==================================================
+            // MESSAGE
+            // ==================================================
 
             player.sendMessage(
-                    ChatColor.GREEN +
-                            "Bạn đã chọn Class: " +
-                            ChatColor.GOLD +
-                            rpgClass.getName()
+                    "§a§l✔ CLASS SELECTED"
             );
 
             player.sendMessage(
-                    ChatColor.GRAY +
-                            "Đã áp dụng " +
-                            rpgClass.getStatModifiers().size() +
-                            " Stat Modifier."
+                    "§7Class: §e"
+                            + rpgClass.getName()
+            );
+
+            player.sendMessage(
+                    "§7"
+                            + rpgClass.getDescription()
+            );
+
+            player.sendMessage(
+                    "§a✦ Class Stats đã được áp dụng."
+            );
+
+            player.sendMessage(
+                    "§a✦ Level Growth đã được áp dụng."
             );
 
             return true;
         }
 
+        // ==================================================
+        // HELP
+        // ==================================================
+
         player.sendMessage(
-                ChatColor.RED +
-                        "Sử dụng: /class hoặc /class choose <class>"
+                "§cDùng:"
+        );
+
+        player.sendMessage(
+                "§7/class"
+        );
+
+        player.sendMessage(
+                "§7/class list"
+        );
+
+        player.sendMessage(
+                "§7/class choose <warrior|mage|archer|assassin>"
         );
 
         return true;

@@ -1,12 +1,14 @@
 package dungnt.rpg.player;
 
 import dungnt.rpg.MyRPG;
-import dungnt.rpg.classsystem.RPGClass;
 import dungnt.rpg.classsystem.ClassLevelBonus;
+import dungnt.rpg.classsystem.RPGClass;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.bukkit.entity.Player;
 
 public class PlayerManager {
 
@@ -15,9 +17,7 @@ public class PlayerManager {
     private final Map<UUID, PlayerData> players =
             new HashMap<>();
 
-    public PlayerManager(
-            MyRPG plugin
-    ) {
+    public PlayerManager(MyRPG plugin) {
         this.plugin = plugin;
     }
 
@@ -25,18 +25,14 @@ public class PlayerManager {
     // GET DATA
     // ==================================================
 
-    public PlayerData getData(
-            org.bukkit.entity.Player player
-    ) {
+    public PlayerData getData(Player player) {
 
         return getData(
                 player.getUniqueId()
         );
     }
 
-    public PlayerData getData(
-            UUID uuid
-    ) {
+    public PlayerData getData(UUID uuid) {
 
         return players.computeIfAbsent(
                 uuid,
@@ -49,7 +45,7 @@ public class PlayerManager {
     // ==================================================
 
     public void setClass(
-            org.bukkit.entity.Player player,
+            Player player,
             RPGClass rpgClass
     ) {
 
@@ -60,24 +56,27 @@ public class PlayerManager {
         PlayerData data =
                 getData(player);
 
+        UUID uuid =
+                player.getUniqueId();
+
         RPGClass oldClass =
                 data.getRpgClass();
 
         // ==================================================
-        // REMOVE OLD CLASS
+        // REMOVE CLASS CŨ
         // ==================================================
 
         if (oldClass != null) {
 
             plugin.getStatManager()
                     .removeClass(
-                            player.getUniqueId(),
+                            uuid,
                             oldClass
                     );
         }
 
         // ==================================================
-        // SET NEW CLASS
+        // SET CLASS MỚI
         // ==================================================
 
         data.setRpgClass(
@@ -85,12 +84,12 @@ public class PlayerManager {
         );
 
         // ==================================================
-        // APPLY NEW CLASS
+        // APPLY CLASS
         // ==================================================
 
         plugin.getStatManager()
                 .applyClass(
-                        player.getUniqueId(),
+                        uuid,
                         rpgClass
                 );
 
@@ -99,7 +98,7 @@ public class PlayerManager {
         // ==================================================
 
         ClassLevelBonus.apply(
-                player.getUniqueId(),
+                uuid,
                 rpgClass,
                 data.getLevel(),
                 plugin.getStatManager()
@@ -107,12 +106,10 @@ public class PlayerManager {
     }
 
     // ==================================================
-    // REMOVE
+    // REMOVE PLAYER
     // ==================================================
 
-    public void remove(
-            org.bukkit.entity.Player player
-    ) {
+    public void remove(Player player) {
 
         if (player == null) {
             return;
@@ -134,6 +131,7 @@ public class PlayerManager {
                     );
         }
 
+        // Xóa toàn bộ modifier còn lại
         plugin.getStatManager()
                 .clearModifiers(uuid);
 
@@ -144,13 +142,53 @@ public class PlayerManager {
     // HAS DATA
     // ==================================================
 
-    public boolean hasData(
-            org.bukkit.entity.Player player
-    ) {
+    public boolean hasData(Player player) {
 
-        return player != null
-                && players.containsKey(
+        if (player == null) {
+            return false;
+        }
+
+        return players.containsKey(
                 player.getUniqueId()
+        );
+    }
+
+    // ==================================================
+    // REFRESH CLASS + LEVEL
+    // ==================================================
+
+    public void refreshStats(Player player) {
+
+        if (player == null) {
+            return;
+        }
+
+        PlayerData data =
+                getData(player);
+
+        UUID uuid =
+                player.getUniqueId();
+
+        // Xóa toàn bộ modifier
+        plugin.getStatManager()
+                .clearModifiers(uuid);
+
+        // Apply class
+        if (data.getRpgClass() != null) {
+
+            plugin.getStatManager()
+                    .applyClass(
+                            uuid,
+                            data.getRpgClass()
+                    );
+        }
+
+        // Apply level
+        ClassLevelBonus.apply(
+                uuid,
+                data.getRpgClass(),
+                data.getLevel(),
+                plugin.getStatManager()
         );
     }
 }
