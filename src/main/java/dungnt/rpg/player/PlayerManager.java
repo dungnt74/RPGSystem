@@ -17,7 +17,10 @@ public class PlayerManager {
     private final Map<UUID, PlayerData> players =
             new HashMap<>();
 
-    public PlayerManager(MyRPG plugin) {
+    public PlayerManager(
+            MyRPG plugin
+    ) {
+
         this.plugin = plugin;
     }
 
@@ -25,14 +28,18 @@ public class PlayerManager {
     // GET DATA
     // ==================================================
 
-    public PlayerData getData(Player player) {
+    public PlayerData getData(
+            Player player
+    ) {
 
         return getData(
                 player.getUniqueId()
         );
     }
 
-    public PlayerData getData(UUID uuid) {
+    public PlayerData getData(
+            UUID uuid
+    ) {
 
         return players.computeIfAbsent(
                 uuid,
@@ -49,7 +56,9 @@ public class PlayerManager {
             RPGClass rpgClass
     ) {
 
-        if (player == null || rpgClass == null) {
+        if (player == null ||
+                rpgClass == null) {
+
             return;
         }
 
@@ -109,7 +118,9 @@ public class PlayerManager {
     // REMOVE PLAYER
     // ==================================================
 
-    public void remove(Player player) {
+    public void remove(
+            Player player
+    ) {
 
         if (player == null) {
             return;
@@ -131,7 +142,7 @@ public class PlayerManager {
                     );
         }
 
-        // Xóa toàn bộ modifier còn lại
+        // Xóa toàn bộ modifier khi player bị remove
         plugin.getStatManager()
                 .clearModifiers(uuid);
 
@@ -142,7 +153,9 @@ public class PlayerManager {
     // HAS DATA
     // ==================================================
 
-    public boolean hasData(Player player) {
+    public boolean hasData(
+            Player player
+    ) {
 
         if (player == null) {
             return false;
@@ -157,7 +170,9 @@ public class PlayerManager {
     // REFRESH CLASS + LEVEL
     // ==================================================
 
-    public void refreshStats(Player player) {
+    public void refreshStats(
+            Player player
+    ) {
 
         if (player == null) {
             return;
@@ -169,11 +184,32 @@ public class PlayerManager {
         UUID uuid =
                 player.getUniqueId();
 
-        // Xóa toàn bộ modifier
-        plugin.getStatManager()
-                .clearModifiers(uuid);
+        // ==================================================
+        // REMOVE CLASS CŨ
+        // ==================================================
 
-        // Apply class
+        if (data.getRpgClass() != null) {
+
+            plugin.getStatManager()
+                    .removeClass(
+                            uuid,
+                            data.getRpgClass()
+                    );
+        }
+
+        // ==================================================
+        // REMOVE LEVEL BONUS
+        // ==================================================
+
+        plugin.getStatManager()
+                .removeLevel(
+                        uuid
+                );
+
+        // ==================================================
+        // APPLY CLASS
+        // ==================================================
+
         if (data.getRpgClass() != null) {
 
             plugin.getStatManager()
@@ -183,12 +219,21 @@ public class PlayerManager {
                     );
         }
 
-        // Apply level
+        // ==================================================
+        // APPLY LEVEL
+        // ==================================================
+
         ClassLevelBonus.apply(
                 uuid,
                 data.getRpgClass(),
                 data.getLevel(),
                 plugin.getStatManager()
         );
+
+        /*
+         * KHÔNG clearModifiers()
+         *
+         * Equipment modifier phải được giữ nguyên.
+         */
     }
 }

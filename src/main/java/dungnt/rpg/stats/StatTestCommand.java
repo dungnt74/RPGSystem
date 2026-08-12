@@ -45,28 +45,24 @@ public class StatTestCommand implements CommandExecutor {
         double attack =
                 plugin.getStatManager().getStat(
                         player.getUniqueId(),
-                        data.getStats(),
                         StatType.ATTACK
                 );
 
         double defense =
                 plugin.getStatManager().getStat(
                         player.getUniqueId(),
-                        data.getStats(),
                         StatType.DEFENSE
                 );
 
         double critChance =
                 plugin.getStatManager().getStat(
                         player.getUniqueId(),
-                        data.getStats(),
                         StatType.CRIT_CHANCE
                 );
 
         double critDamage =
                 plugin.getStatManager().getStat(
                         player.getUniqueId(),
-                        data.getStats(),
                         StatType.CRIT_DAMAGE
                 );
 

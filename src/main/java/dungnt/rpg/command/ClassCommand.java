@@ -4,7 +4,6 @@ import dungnt.rpg.MyRPG;
 import dungnt.rpg.classsystem.RPGClass;
 import dungnt.rpg.player.PlayerData;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,6 +25,10 @@ public class ClassCommand implements CommandExecutor {
             String[] args
     ) {
 
+        // ==================================================
+        // PLAYER ONLY
+        // ==================================================
+
         if (!(sender instanceof Player player)) {
 
             sender.sendMessage(
@@ -45,55 +48,9 @@ public class ClassCommand implements CommandExecutor {
 
         if (args.length == 0) {
 
-            if (data.getRpgClass() == null) {
-
-                player.sendMessage(
-                        "§eBạn chưa chọn Class."
-                );
-
-                player.sendMessage(
-                        "§7Các Class:"
-                );
-
-                player.sendMessage(
-                        "§cWarrior §7| §dMage §7| §aArcher §7| §5Assassin"
-                );
-
-                player.sendMessage(
-                        "§7Dùng: §e/class choose <class>"
-                );
-
-                return true;
-            }
-
-            RPGClass rpgClass =
-                    data.getRpgClass();
-
-            player.sendMessage(
-                    "§8§m--------------------------"
-            );
-
-            player.sendMessage(
-                    "§6§l✦ CLASS"
-            );
-
-            player.sendMessage(
-                    "§7Class: §e"
-                            + rpgClass.getName()
-            );
-
-            player.sendMessage(
-                    "§7"
-                            + rpgClass.getDescription()
-            );
-
-            player.sendMessage(
-                    "§7Skills: §f"
-                            + rpgClass.getSkills().size()
-            );
-
-            player.sendMessage(
-                    "§8§m--------------------------"
+            showCurrentClass(
+                    player,
+                    data
             );
 
             return true;
@@ -105,35 +62,13 @@ public class ClassCommand implements CommandExecutor {
 
         if (args[0].equalsIgnoreCase("list")) {
 
-            player.sendMessage(
-                    "§8§m--------------------------"
-            );
-
-            player.sendMessage(
-                    "§6§l✦ RPG CLASSES"
-            );
-
-            for (RPGClass rpgClass :
-                    plugin.getClassManager()
-                            .getClasses()) {
-
-                player.sendMessage(
-                        "§e"
-                                + rpgClass.getId()
-                                + " §7- §f"
-                                + rpgClass.getName()
-                );
-            }
-
-            player.sendMessage(
-                    "§8§m--------------------------"
-            );
+            showClassList(player);
 
             return true;
         }
 
         // ==================================================
-        // /CLASS CHOOSE
+        // /CLASS CHOOSE <CLASS>
         // ==================================================
 
         if (args[0].equalsIgnoreCase("choose")) {
@@ -147,9 +82,16 @@ public class ClassCommand implements CommandExecutor {
                 return true;
             }
 
+            String classId =
+                    args[1].toLowerCase();
+
             RPGClass rpgClass =
                     plugin.getClassManager()
-                            .getClass(args[1]);
+                            .getClass(classId);
+
+            // ==================================================
+            // CLASS NOT FOUND
+            // ==================================================
 
             if (rpgClass == null) {
 
@@ -158,15 +100,36 @@ public class ClassCommand implements CommandExecutor {
                 );
 
                 player.sendMessage(
-                        "§7Warrior, Mage, Archer, Assassin"
+                        "§7Class: §ewarrior §7| §dmage §7| §aarcher §7| §5assassin"
                 );
 
                 return true;
             }
 
             // ==================================================
-            // SET CLASS
+            // SAME CLASS
             // ==================================================
+
+            if (data.getRpgClass() != null
+                    && data.getRpgClass()
+                    .getId()
+                    .equalsIgnoreCase(
+                            rpgClass.getId()
+                    )) {
+
+                player.sendMessage(
+                        "§eBạn đang sử dụng Class này rồi."
+                );
+
+                return true;
+            }
+
+            // ==================================================
+            // CHANGE CLASS
+            // ==================================================
+
+            RPGClass oldClass =
+                    data.getRpgClass();
 
             plugin.getPlayerManager()
                     .setClass(
@@ -179,11 +142,23 @@ public class ClassCommand implements CommandExecutor {
             // ==================================================
 
             player.sendMessage(
-                    "§a§l✔ CLASS SELECTED"
+                    "§8§m--------------------------"
             );
 
             player.sendMessage(
-                    "§7Class: §e"
+                    "§a§l✔ CLASS SELECTED"
+            );
+
+            if (oldClass != null) {
+
+                player.sendMessage(
+                        "§7Class cũ: §c"
+                                + oldClass.getName()
+                );
+            }
+
+            player.sendMessage(
+                    "§7Class mới: §e"
                             + rpgClass.getName()
             );
 
@@ -197,7 +172,11 @@ public class ClassCommand implements CommandExecutor {
             );
 
             player.sendMessage(
-                    "§a✦ Level Growth đã được áp dụng."
+                    "§a✦ Level Stats vẫn được giữ."
+            );
+
+            player.sendMessage(
+                    "§8§m--------------------------"
             );
 
             return true;
@@ -207,8 +186,137 @@ public class ClassCommand implements CommandExecutor {
         // HELP
         // ==================================================
 
+        sendHelp(player);
+
+        return true;
+    }
+
+    // ==================================================
+    // CURRENT CLASS
+    // ==================================================
+
+    private void showCurrentClass(
+            Player player,
+            PlayerData data
+    ) {
+
+        RPGClass rpgClass =
+                data.getRpgClass();
+
+        if (rpgClass == null) {
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
+
+            player.sendMessage(
+                    "§e§l✦ CLASS"
+            );
+
+            player.sendMessage(
+                    "§7Bạn chưa chọn Class."
+            );
+
+            player.sendMessage(
+                    "§7Dùng: §e/class list"
+            );
+
+            player.sendMessage(
+                    "§7Sau đó: §e/class choose <class>"
+            );
+
+            player.sendMessage(
+                    "§8§m--------------------------"
+            );
+
+            return;
+        }
+
         player.sendMessage(
-                "§cDùng:"
+                "§8§m--------------------------"
+        );
+
+        player.sendMessage(
+                "§6§l✦ CLASS"
+        );
+
+        player.sendMessage(
+                "§7Class: §e"
+                        + rpgClass.getName()
+        );
+
+        player.sendMessage(
+                "§7"
+                        + rpgClass.getDescription()
+        );
+
+        player.sendMessage(
+                "§7Skills: §f"
+                        + rpgClass.getSkills().size()
+        );
+
+        player.sendMessage(
+                "§7Class Stats: §f"
+                        + rpgClass.getStatModifiers().size()
+        );
+
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
+    }
+
+    // ==================================================
+    // CLASS LIST
+    // ==================================================
+
+    private void showClassList(
+            Player player
+    ) {
+
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
+
+        player.sendMessage(
+                "§6§l✦ RPG CLASSES"
+        );
+
+        for (RPGClass rpgClass :
+                plugin.getClassManager()
+                        .getClasses()) {
+
+            player.sendMessage(
+                    "§e"
+                            + rpgClass.getId()
+                            + " §7- §f"
+                            + rpgClass.getName()
+            );
+
+            player.sendMessage(
+                    "  §7"
+                            + rpgClass.getDescription()
+            );
+        }
+
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
+    }
+
+    // ==================================================
+    // HELP
+    // ==================================================
+
+    private void sendHelp(
+            Player player
+    ) {
+
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
+
+        player.sendMessage(
+                "§6§l✦ CLASS COMMAND"
         );
 
         player.sendMessage(
@@ -220,9 +328,11 @@ public class ClassCommand implements CommandExecutor {
         );
 
         player.sendMessage(
-                "§7/class choose <warrior|mage|archer|assassin>"
+                "§7/class choose <class>"
         );
 
-        return true;
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
     }
 }

@@ -94,9 +94,9 @@ public class RPGMobCombatListener implements Listener {
         double defense =
                 statManager.getStat(
                         player.getUniqueId(),
-                        playerStats,
                         StatType.DEFENSE
                 );
+
 
         // =========================
         // CALCULATE DAMAGE

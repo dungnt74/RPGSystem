@@ -28,3 +28,11 @@ commands:
   level:
     description: Xem Level và EXP
     usage: /level
+
+  itemtest:
+    description: Test RPG class items
+    usage: /itemtest <warrior|mage|archer|assassin>
+
+  equipment:
+    description: Xem trang bị
+    usage: /equipment

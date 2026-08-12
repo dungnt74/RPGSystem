@@ -1,22 +1,28 @@
 package dungnt.rpg;
 
 import dungnt.rpg.classsystem.ClassManager;
+
 import dungnt.rpg.combat.CombatService;
 import dungnt.rpg.combat.DamageCalculator;
-import dungnt.rpg.combat.DamageListener;
 import dungnt.rpg.combat.FloatingDamage;
 import dungnt.rpg.combat.RPGCombatListener;
 import dungnt.rpg.combat.RPGMobCombatListener;
-import dungnt.rpg.equipment.EquipmentItemManager;
-import dungnt.rpg.equipment.EquipmentLoreManager;
-import dungnt.rpg.equipment.EquipmentStatManager;
-import dungnt.rpg.equipment.EquipmentListener;
 
 import dungnt.rpg.command.ClassCommand;
+import dungnt.rpg.command.EquipmentCommand;
+import dungnt.rpg.command.ItemTestCommand;
 import dungnt.rpg.command.LevelCommand;
 import dungnt.rpg.command.MagicDamageTestCommand;
 import dungnt.rpg.command.MobTestCommand;
 import dungnt.rpg.command.SkillCommand;
+
+import dungnt.rpg.item.EquipmentListener;
+import dungnt.rpg.item.EquipmentManager;
+import dungnt.rpg.item.ItemManager;
+import dungnt.rpg.item.RPGItemManager;
+import dungnt.rpg.item.SampleItems;
+
+import dungnt.rpg.level.LevelManager;
 
 import dungnt.rpg.mob.MobManager;
 import dungnt.rpg.mob.MobStatsManager;
@@ -31,19 +37,9 @@ import dungnt.rpg.skills.SkillService;
 import dungnt.rpg.stats.StatManager;
 import dungnt.rpg.stats.StatTestCommand;
 
-import dungnt.rpg.level.LevelManager;
-
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MyRPG extends JavaPlugin {
-
-    // ==================================================
-    // SKILL
-    // ==================================================
-
-    private SkillManager skillManager;
-    private SkillService skillService;
-    private CooldownManager cooldownManager;
 
     // ==================================================
     // CLASS
@@ -58,14 +54,6 @@ public final class MyRPG extends JavaPlugin {
     private PlayerManager playerManager;
 
     // ==================================================
-    // COMBAT
-    // ==================================================
-
-    private DamageCalculator damageCalculator;
-    private CombatService combatService;
-    private FloatingDamage floatingDamage;
-
-    // ==================================================
     // STATS
     // ==================================================
 
@@ -78,15 +66,36 @@ public final class MyRPG extends JavaPlugin {
     private LevelManager levelManager;
 
     // ==================================================
+    // ITEM
+    // ==================================================
+
+    private RPGItemManager rpgItemManager;
+    private ItemManager itemManager;
+    private EquipmentManager equipmentManager;
+
+    // ==================================================
+    // SKILL
+    // ==================================================
+
+    private SkillManager skillManager;
+    private SkillService skillService;
+    private CooldownManager cooldownManager;
+
+    // ==================================================
+    // COMBAT
+    // ==================================================
+
+    private DamageCalculator damageCalculator;
+    private CombatService combatService;
+    private FloatingDamage floatingDamage;
+
+    // ==================================================
     // MOB
     // ==================================================
 
     private MobStatsManager mobStatsManager;
     private MobManager mobManager;
 
-    private EquipmentStatManager equipmentStatManager;
-    private EquipmentItemManager equipmentItemManager;
-    private EquipmentLoreManager equipmentLoreManager;
     // ==================================================
     // ENABLE
     // ==================================================
@@ -95,8 +104,11 @@ public final class MyRPG extends JavaPlugin {
     public void onEnable() {
 
         // ==================================================
-        // MANAGERS
+        // CORE
         // ==================================================
+
+        statManager =
+                new StatManager();
 
         classManager =
                 new ClassManager();
@@ -104,36 +116,36 @@ public final class MyRPG extends JavaPlugin {
         playerManager =
                 new PlayerManager(this);
 
+        // ==================================================
+        // SKILL
+        // ==================================================
+
         skillManager =
                 new SkillManager();
 
         cooldownManager =
                 new CooldownManager();
 
-        statManager =
-                new StatManager();
+        // ==================================================
+        // ITEM SYSTEM
+        // ==================================================
 
-        equipmentItemManager =
-                new EquipmentItemManager(this);
+        rpgItemManager =
+                new RPGItemManager();
 
-        equipmentLoreManager =
-                new EquipmentLoreManager(
-                        equipmentItemManager
-                );
+        itemManager =
+                new ItemManager(this);
 
-        equipmentStatManager =
-                new EquipmentStatManager(
+        equipmentManager =
+                new EquipmentManager(
                         statManager
                 );
 
-        damageCalculator =
-                new DamageCalculator();
+        // ==================================================
+        // REGISTER SAMPLE ITEMS
+        // ==================================================
 
-        mobStatsManager =
-                new MobStatsManager();
-
-        mobManager =
-                new MobManager();
+        SampleItems.registerAll();
 
         // ==================================================
         // LEVEL
@@ -145,6 +157,9 @@ public final class MyRPG extends JavaPlugin {
         // ==================================================
         // COMBAT
         // ==================================================
+
+        damageCalculator =
+                new DamageCalculator();
 
         floatingDamage =
                 new FloatingDamage(this);
@@ -160,103 +175,26 @@ public final class MyRPG extends JavaPlugin {
                 new SkillService(this);
 
         // ==================================================
+        // MOB
+        // ==================================================
+
+        mobStatsManager =
+                new MobStatsManager();
+
+        mobManager =
+                new MobManager();
+
+        // ==================================================
         // EVENTS
         // ==================================================
 
-        getServer()
-                .getPluginManager()
-                .registerEvents(
-                        new DamageListener(),
-                        this
-                );
-
-        getServer()
-                .getPluginManager()
-                .registerEvents(
-                        new FireballListener(this),
-                        this
-                );
-
-        getServer()
-                .getPluginManager()
-                .registerEvents(
-                        new RPGCombatListener(this),
-                        this
-                );
-
-        getServer()
-                .getPluginManager()
-                .registerEvents(
-                        new RPGMobCombatListener(this),
-                        this
-                );
-
-        getServer()
-                .getPluginManager()
-                .registerEvents(
-                        new EquipmentListener(
-                                this,
-                                statManager,
-                                equipmentItemManager
-                        ),
-                        this
-                );
+        registerEvents();
 
         // ==================================================
         // COMMANDS
         // ==================================================
 
-        if (getCommand("class") != null) {
-
-            getCommand("class")
-                    .setExecutor(
-                            new ClassCommand(this)
-                    );
-        }
-
-        if (getCommand("skilltest") != null) {
-
-            getCommand("skilltest")
-                    .setExecutor(
-                            new SkillCommand(this)
-                    );
-        }
-
-        if (getCommand("stattest") != null) {
-
-            getCommand("stattest")
-                    .setExecutor(
-                            new StatTestCommand(this)
-                    );
-        }
-
-        if (getCommand("mobtest") != null) {
-
-            getCommand("mobtest")
-                    .setExecutor(
-                            new MobTestCommand(this)
-                    );
-        }
-
-        if (getCommand("magicdamage") != null) {
-
-            getCommand("magicdamage")
-                    .setExecutor(
-                            new MagicDamageTestCommand(this)
-                    );
-        }
-
-        // ==================================================
-        // LEVEL COMMAND
-        // ==================================================
-
-        if (getCommand("level") != null) {
-
-            getCommand("level")
-                    .setExecutor(
-                            new LevelCommand(this)
-                    );
-        }
+        registerCommands();
 
         // ==================================================
         // LOG
@@ -280,6 +218,164 @@ public final class MyRPG extends JavaPlugin {
                         .getClasses()
                         .size()
         );
+
+        getLogger().info(
+                "RPG Item System: ENABLED"
+        );
+
+        getLogger().info(
+                "Equipment System: ENABLED"
+        );
+    }
+
+    // ==================================================
+    // EVENTS
+    // ==================================================
+
+    private void registerEvents() {
+
+        // --------------------------------------------------
+        // SKILL
+        // --------------------------------------------------
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new FireballListener(this),
+                        this
+                );
+
+        // --------------------------------------------------
+        // RPG COMBAT
+        // --------------------------------------------------
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new RPGCombatListener(this),
+                        this
+                );
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new RPGMobCombatListener(this),
+                        this
+                );
+
+        // --------------------------------------------------
+        // EQUIPMENT
+        // --------------------------------------------------
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new EquipmentListener(this),
+                        this
+                );
+    }
+
+    // ==================================================
+    // COMMANDS
+    // ==================================================
+
+    private void registerCommands() {
+
+        // --------------------------------------------------
+        // CLASS
+        // --------------------------------------------------
+
+        if (getCommand("class") != null) {
+
+            getCommand("class")
+                    .setExecutor(
+                            new ClassCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // SKILL
+        // --------------------------------------------------
+
+        if (getCommand("skilltest") != null) {
+
+            getCommand("skilltest")
+                    .setExecutor(
+                            new SkillCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // STAT
+        // --------------------------------------------------
+
+        if (getCommand("stattest") != null) {
+
+            getCommand("stattest")
+                    .setExecutor(
+                            new StatTestCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // MOB
+        // --------------------------------------------------
+
+        if (getCommand("mobtest") != null) {
+
+            getCommand("mobtest")
+                    .setExecutor(
+                            new MobTestCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // MAGIC DAMAGE
+        // --------------------------------------------------
+
+        if (getCommand("magicdamage") != null) {
+
+            getCommand("magicdamage")
+                    .setExecutor(
+                            new MagicDamageTestCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // ITEM TEST
+        // --------------------------------------------------
+
+        if (getCommand("itemtest") != null) {
+
+            getCommand("itemtest")
+                    .setExecutor(
+                            new ItemTestCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // EQUIPMENT
+        // --------------------------------------------------
+
+        if (getCommand("equipment") != null) {
+
+            getCommand("equipment")
+                    .setExecutor(
+                            new EquipmentCommand(this)
+                    );
+        }
+
+        // --------------------------------------------------
+        // LEVEL
+        // --------------------------------------------------
+
+        if (getCommand("level") != null) {
+
+            getCommand("level")
+                    .setExecutor(
+                            new LevelCommand(this)
+                    );
+        }
     }
 
     // ==================================================
@@ -289,72 +385,125 @@ public final class MyRPG extends JavaPlugin {
     @Override
     public void onDisable() {
 
+        if (equipmentManager != null) {
+
+            /*
+             * EquipmentManager chỉ giữ runtime data.
+             *
+             * Không cần lưu khi server shutdown
+             * ở phiên bản hiện tại.
+             */
+        }
+
         getLogger().info(
                 "DungNT RPG DISABLED"
         );
     }
 
     // ==================================================
-    // GETTERS
+    // CLASS GETTER
     // ==================================================
 
     public ClassManager getClassManager() {
+
         return classManager;
     }
 
+    // ==================================================
+    // PLAYER GETTER
+    // ==================================================
+
     public PlayerManager getPlayerManager() {
+
         return playerManager;
     }
 
+    // ==================================================
+    // STAT GETTER
+    // ==================================================
+
+    public StatManager getStatManager() {
+
+        return statManager;
+    }
+
+    // ==================================================
+    // LEVEL GETTER
+    // ==================================================
+
+    public LevelManager getLevelManager() {
+
+        return levelManager;
+    }
+
+    // ==================================================
+    // ITEM GETTERS
+    // ==================================================
+
+    public RPGItemManager getRPGItemManager() {
+
+        return rpgItemManager;
+    }
+
+    public ItemManager getItemManager() {
+
+        return itemManager;
+    }
+
+    public EquipmentManager getEquipmentManager() {
+
+        return equipmentManager;
+    }
+
+    // ==================================================
+    // SKILL GETTERS
+    // ==================================================
+
     public SkillManager getSkillManager() {
+
         return skillManager;
     }
 
-    public CooldownManager getCooldownManager() {
-        return cooldownManager;
-    }
-
     public SkillService getSkillService() {
+
         return skillService;
     }
 
+    public CooldownManager getCooldownManager() {
+
+        return cooldownManager;
+    }
+
+    // ==================================================
+    // COMBAT GETTERS
+    // ==================================================
+
     public DamageCalculator getDamageCalculator() {
+
         return damageCalculator;
     }
 
     public CombatService getCombatService() {
+
         return combatService;
     }
 
     public FloatingDamage getFloatingDamage() {
+
         return floatingDamage;
     }
 
-    public StatManager getStatManager() {
-        return statManager;
-    }
-
-    public LevelManager getLevelManager() {
-        return levelManager;
-    }
+    // ==================================================
+    // MOB GETTERS
+    // ==================================================
 
     public MobStatsManager getMobStatsManager() {
+
         return mobStatsManager;
     }
 
     public MobManager getMobManager() {
+
         return mobManager;
-    }
-
-    public EquipmentStatManager getEquipmentStatManager() {
-        return equipmentStatManager;
-    }
-
-    public EquipmentItemManager getEquipmentItemManager() {
-        return equipmentItemManager;
-    }
-
-    public EquipmentLoreManager getEquipmentLoreManager() {
-        return equipmentLoreManager;
     }
 }

@@ -1,7 +1,6 @@
-package dungnt.rpg.equipment;
+package dungnt.rpg.item;
 
-import dungnt.rpg.stats.StatModifier;
-import dungnt.rpg.stats.StatManager;
+import dungnt.rpg.MyRPG;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,35 +11,26 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
 import java.util.UUID;
 
 public class EquipmentListener implements Listener {
 
-    private final JavaPlugin plugin;
+    private final MyRPG plugin;
 
-    private final StatManager statManager;
-    private final EquipmentItemManager itemManager;
+    // ==================================================
+    // CONSTRUCTOR
+    // ==================================================
 
     public EquipmentListener(
-            JavaPlugin plugin,
-            StatManager statManager,
-            EquipmentItemManager itemManager
+            MyRPG plugin
     ) {
 
         this.plugin = plugin;
-
-        this.statManager =
-                statManager;
-
-        this.itemManager =
-                itemManager;
     }
 
     // ==================================================
-    // JOIN
+    // PLAYER JOIN
     // ==================================================
 
     @EventHandler
@@ -60,7 +50,7 @@ public class EquipmentListener implements Listener {
     }
 
     // ==================================================
-    // CLICK
+    // INVENTORY CLICK
     // ==================================================
 
     @EventHandler(
@@ -86,7 +76,7 @@ public class EquipmentListener implements Listener {
     }
 
     // ==================================================
-    // DRAG
+    // INVENTORY DRAG
     // ==================================================
 
     @EventHandler(
@@ -112,7 +102,7 @@ public class EquipmentListener implements Listener {
     }
 
     // ==================================================
-    // QUIT
+    // PLAYER QUIT
     // ==================================================
 
     @EventHandler
@@ -120,41 +110,12 @@ public class EquipmentListener implements Listener {
             PlayerQuitEvent event
     ) {
 
-        statManager.removeModifier(
+        UUID uuid =
                 event.getPlayer()
-                        .getUniqueId(),
-                "equipment_mainhand"
-        );
+                        .getUniqueId();
 
-        statManager.removeModifier(
-                event.getPlayer()
-                        .getUniqueId(),
-                "equipment_offhand"
-        );
-
-        statManager.removeModifier(
-                event.getPlayer()
-                        .getUniqueId(),
-                "equipment_helmet"
-        );
-
-        statManager.removeModifier(
-                event.getPlayer()
-                        .getUniqueId(),
-                "equipment_chestplate"
-        );
-
-        statManager.removeModifier(
-                event.getPlayer()
-                        .getUniqueId(),
-                "equipment_leggings"
-        );
-
-        statManager.removeModifier(
-                event.getPlayer()
-                        .getUniqueId(),
-                "equipment_boots"
-        );
+        plugin.getEquipmentManager()
+                .remove(uuid);
     }
 
     // ==================================================
@@ -175,46 +136,18 @@ public class EquipmentListener implements Listener {
                 player.getUniqueId();
 
         // ==================================================
-        // REMOVE OLD
+        // CLEAR CURRENT RPG EQUIPMENT
         // ==================================================
 
-        removeSlot(
-                uuid,
-                "mainhand"
-        );
-
-        removeSlot(
-                uuid,
-                "offhand"
-        );
-
-        removeSlot(
-                uuid,
-                "helmet"
-        );
-
-        removeSlot(
-                uuid,
-                "chestplate"
-        );
-
-        removeSlot(
-                uuid,
-                "leggings"
-        );
-
-        removeSlot(
-                uuid,
-                "boots"
-        );
+        plugin.getEquipmentManager()
+                .clear(uuid);
 
         // ==================================================
         // MAIN HAND
         // ==================================================
 
-        applyItem(
+        syncItem(
                 uuid,
-                "mainhand",
                 player.getInventory()
                         .getItemInMainHand()
         );
@@ -223,9 +156,8 @@ public class EquipmentListener implements Listener {
         // OFF HAND
         // ==================================================
 
-        applyItem(
+        syncItem(
                 uuid,
-                "offhand",
                 player.getInventory()
                         .getItemInOffHand()
         );
@@ -240,98 +172,98 @@ public class EquipmentListener implements Listener {
 
         if (armor.length >= 4) {
 
-            applyItem(
+            // Bukkit armor order:
+            // 0 = boots
+            // 1 = leggings
+            // 2 = chestplate
+            // 3 = helmet
+
+            syncItem(
                     uuid,
-                    "boots",
                     armor[0]
             );
 
-            applyItem(
+            syncItem(
                     uuid,
-                    "leggings",
                     armor[1]
             );
 
-            applyItem(
+            syncItem(
                     uuid,
-                    "chestplate",
                     armor[2]
             );
 
-            applyItem(
+            syncItem(
                     uuid,
-                    "helmet",
                     armor[3]
             );
         }
+
+        // ==================================================
+        // FUTURE RPG SLOTS
+        // ==================================================
+        //
+        // Đai lưng
+        // Găng tay
+        // Ngọc bội
+        // Nhẫn
+        // Khuyên tai
+        // Vòng cổ
+        // Cánh
+        // Huy hiệu
+        // Thú cưng
+        // Thú cưỡi
+        //
+        // Các slot này KHÔNG nằm trong
+        // Bukkit PlayerInventory mặc định.
+        //
+        // Khi có RPG Inventory riêng,
+        // listener sẽ sync chúng ở đây.
+        //
+        // ==================================================
     }
 
     // ==================================================
-    // APPLY ITEM
+    // SYNC ITEM
     // ==================================================
 
-    private void applyItem(
+    private void syncItem(
             UUID uuid,
-            String slot,
-            ItemStack item
+            ItemStack itemStack
     ) {
 
-        if (!itemManager.isRPGItem(item)) {
+        if (uuid == null) {
             return;
         }
 
-        List<StatModifier> modifiers =
-                itemManager.getModifiers(item);
+        if (itemStack == null ||
+                itemStack.getType().isAir()) {
 
-        for (StatModifier modifier :
-                modifiers) {
-
-            String id =
-                    "equipment_" +
-                            slot +
-                            "_" +
-                            modifier.getType()
-                                    .name()
-                                    .toLowerCase();
-
-            StatModifier slotModifier =
-                    new StatModifier(
-                            id,
-                            modifier.getType(),
-                            modifier.getModifierType(),
-                            modifier.getAmount()
-                    );
-
-            statManager.addModifier(
-                    uuid,
-                    slotModifier
-            );
+            return;
         }
-    }
 
-    // ==================================================
-    // REMOVE SLOT
-    // ==================================================
+        // ==================================================
+        // ITEMSTACK -> RPG ITEM
+        // ==================================================
 
-    private void removeSlot(
-            UUID uuid,
-            String slot
-    ) {
+        RPGItem rpgItem =
+                plugin.getItemManager()
+                        .fromItemStack(
+                                itemStack
+                        );
 
-        for (dungnt.rpg.stats.StatType type :
-                dungnt.rpg.stats.StatType.values()) {
-
-            String id =
-                    "equipment_" +
-                            slot +
-                            "_" +
-                            type.name()
-                                    .toLowerCase();
-
-            statManager.removeModifier(
-                    uuid,
-                    id
-            );
+        if (rpgItem == null) {
+            return;
         }
+
+        // ==================================================
+        // EQUIP
+        // ==================================================
+
+        plugin.getEquipmentManager()
+                .equip(
+                        uuid,
+                        rpgItem
+                );
     }
 }

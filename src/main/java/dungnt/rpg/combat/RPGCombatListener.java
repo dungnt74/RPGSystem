@@ -25,31 +25,19 @@ public class RPGCombatListener implements Listener {
             EntityDamageByEntityEvent event
     ) {
 
-        // ==================================================
-        // CHỈ PLAYER ĐÁNH
-        // ==================================================
-
         if (!(event.getDamager() instanceof Player player)) {
             return;
         }
-
-        // ==================================================
-        // TARGET
-        // ==================================================
 
         if (!(event.getEntity() instanceof LivingEntity target)) {
             return;
         }
 
-        // ==================================================
-        // HỦY DAMAGE VANILLA
-        // ==================================================
-
+        /*
+         * Tắt damage vanilla.
+         * RPGCombat sẽ tự tính damage.
+         */
         event.setCancelled(true);
-
-        // ==================================================
-        // RPG PHYSICAL DAMAGE
-        // ==================================================
 
         DamageResult result =
                 plugin.getCombatService()
@@ -59,9 +47,9 @@ public class RPGCombatListener implements Listener {
                                 1.0
                         );
 
-        // ==================================================
-        // DAMAGE MESSAGE
-        // ==================================================
+        if (result == null) {
+            return;
+        }
 
         if (result.getDamage() <= 0) {
 
@@ -71,10 +59,6 @@ public class RPGCombatListener implements Listener {
 
             return;
         }
-
-        // ==================================================
-        // CRITICAL
-        // ==================================================
 
         if (result.isCritical()) {
 
@@ -88,10 +72,6 @@ public class RPGCombatListener implements Listener {
 
             return;
         }
-
-        // ==================================================
-        // NORMAL DAMAGE
-        // ==================================================
 
         player.sendMessage(
                 "§c⚔ Damage §f→ §e"

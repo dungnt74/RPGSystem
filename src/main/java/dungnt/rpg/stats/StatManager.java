@@ -1,13 +1,116 @@
 package dungnt.rpg.stats;
 
 import dungnt.rpg.classsystem.RPGClass;
+import dungnt.rpg.item.RPGItem;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class StatManager {
 
-    private final Map<UUID, List<StatModifier>> modifiers =
+    /*
+     * Base stats của từng player.
+     *
+     * Đây là stat gốc trước khi cộng:
+     * - Class
+     * - Level
+     * - Equipment
+     */
+    private final Map<UUID, EnumMap<StatType, Double>> baseStats =
             new HashMap<>();
+
+    /*
+     * Các modifier đang áp dụng cho player.
+     *
+     * Ví dụ:
+     *
+     * equipment_mainhand_attack
+     * class_warrior_attack
+     * level_attack
+     */
+    private final Map<UUID, Map<String, StatModifier>> modifiers =
+            new HashMap<>();
+
+    // ==================================================
+    // BASE STAT
+    // ==================================================
+
+    public void setBaseStat(
+            UUID uuid,
+            StatType type,
+            double value
+    ) {
+
+        if (uuid == null || type == null) {
+            return;
+        }
+
+        EnumMap<StatType, Double> stats =
+                baseStats.computeIfAbsent(
+                        uuid,
+                        key -> new EnumMap<>(StatType.class)
+                );
+
+        stats.put(
+                type,
+                value
+        );
+    }
+
+    // ==================================================
+    // ADD BASE STAT
+    // ==================================================
+
+    public void addBaseStat(
+            UUID uuid,
+            StatType type,
+            double amount
+    ) {
+
+        if (uuid == null || type == null) {
+            return;
+        }
+
+        double current =
+                getBaseStat(
+                        uuid,
+                        type
+                );
+
+        setBaseStat(
+                uuid,
+                type,
+                current + amount
+        );
+    }
+
+    // ==================================================
+    // GET BASE STAT
+    // ==================================================
+
+    public double getBaseStat(
+            UUID uuid,
+            StatType type
+    ) {
+
+        if (uuid == null || type == null) {
+            return 0;
+        }
+
+        Map<StatType, Double> stats =
+                baseStats.get(uuid);
+
+        if (stats == null) {
+            return 0;
+        }
+
+        return stats.getOrDefault(
+                type,
+                0.0
+        );
+    }
 
     // ==================================================
     // ADD MODIFIER
@@ -22,22 +125,22 @@ public class StatManager {
             return;
         }
 
-        List<StatModifier> list =
+        Map<String, StatModifier> playerModifiers =
                 modifiers.computeIfAbsent(
                         uuid,
-                        key -> new ArrayList<>()
+                        key -> new HashMap<>()
                 );
 
-        // Modifier cùng ID sẽ replace modifier cũ
-        list.removeIf(
-                existing ->
-                        existing.getId()
-                                .equalsIgnoreCase(
-                                        modifier.getId()
-                                )
+        /*
+         * Cùng ID thì replace.
+         *
+         * Điều này tránh duplicate modifier
+         * khi equipment được refresh.
+         */
+        playerModifiers.put(
+                modifier.getId(),
+                modifier
         );
-
-        list.add(modifier);
     }
 
     // ==================================================
@@ -53,23 +156,259 @@ public class StatManager {
             return;
         }
 
-        List<StatModifier> list =
+        Map<String, StatModifier> playerModifiers =
                 modifiers.get(uuid);
 
-        if (list == null) {
+        if (playerModifiers == null) {
             return;
         }
 
-        list.removeIf(
-                modifier ->
-                        modifier.getId()
-                                .equalsIgnoreCase(
-                                        modifierId
-                                )
+        playerModifiers.remove(
+                modifierId
         );
 
-        if (list.isEmpty()) {
+        if (playerModifiers.isEmpty()) {
             modifiers.remove(uuid);
+        }
+    }
+
+    // ==================================================
+    // REMOVE BY PREFIX
+    // ==================================================
+
+    private void removeModifiersByPrefix(
+            UUID uuid,
+            String prefix
+    ) {
+
+        if (uuid == null || prefix == null) {
+            return;
+        }
+
+        Map<String, StatModifier> playerModifiers =
+                modifiers.get(uuid);
+
+        if (playerModifiers == null) {
+            return;
+        }
+
+        String lowerPrefix =
+                prefix.toLowerCase();
+
+        playerModifiers.entrySet()
+                .removeIf(entry ->
+                        entry.getKey()
+                                .toLowerCase()
+                                .startsWith(lowerPrefix)
+                );
+
+        if (playerModifiers.isEmpty()) {
+            modifiers.remove(uuid);
+        }
+    }
+
+    // ==================================================
+    // GET MODIFIER
+    // ==================================================
+
+    public StatModifier getModifier(
+            UUID uuid,
+            String modifierId
+    ) {
+
+        if (uuid == null || modifierId == null) {
+            return null;
+        }
+
+        Map<String, StatModifier> playerModifiers =
+                modifiers.get(uuid);
+
+        if (playerModifiers == null) {
+            return null;
+        }
+
+        return playerModifiers.get(
+                modifierId
+        );
+    }
+
+    // ==================================================
+    // GET ALL MODIFIERS
+    // ==================================================
+
+    public Map<String, StatModifier> getModifiers(
+            UUID uuid
+    ) {
+
+        if (uuid == null) {
+            return Map.of();
+        }
+
+        Map<String, StatModifier> playerModifiers =
+                modifiers.get(uuid);
+
+        if (playerModifiers == null) {
+            return Map.of();
+        }
+
+        return Map.copyOf(
+                playerModifiers
+        );
+    }
+
+    // ==================================================
+    // FINAL STAT
+    // ==================================================
+
+    public double getStat(
+            UUID uuid,
+            StatType type
+    ) {
+
+        if (uuid == null || type == null) {
+            return 0;
+        }
+
+        /*
+         * Bắt đầu bằng BASE STAT.
+         */
+        double value =
+                getBaseStat(
+                        uuid,
+                        type
+                );
+
+        Map<String, StatModifier> playerModifiers =
+                modifiers.get(uuid);
+
+        if (playerModifiers == null) {
+            return value;
+        }
+
+        // ==================================================
+        // FLAT
+        // ==================================================
+
+        for (StatModifier modifier :
+                playerModifiers.values()) {
+
+            if (modifier == null) {
+                continue;
+            }
+
+            if (modifier.getType() != type) {
+                continue;
+            }
+
+            if (modifier.getModifierType()
+                    == ModifierType.FLAT) {
+
+                value +=
+                        modifier.getAmount();
+            }
+        }
+
+        // ==================================================
+        // PERCENT
+        // ==================================================
+
+        double percent = 0;
+
+        for (StatModifier modifier :
+                playerModifiers.values()) {
+
+            if (modifier == null) {
+                continue;
+            }
+
+            if (modifier.getType() != type) {
+                continue;
+            }
+
+            if (modifier.getModifierType()
+                    == ModifierType.PERCENT) {
+
+                percent +=
+                        modifier.getAmount();
+            }
+        }
+
+        value *=
+                1.0 +
+                        percent / 100.0;
+
+        return value;
+    }
+
+    // ==================================================
+    // APPLY LEVEL
+    // ==================================================
+
+    public void removeLevel(
+            UUID uuid
+    ) {
+
+        if (uuid == null) {
+            return;
+        }
+
+        removeModifiersByPrefix(
+                uuid,
+                "level_"
+        );
+    }
+
+    // ==================================================
+    // APPLY RPG ITEM
+    // ==================================================
+
+    public void applyItem(
+            UUID uuid,
+            RPGItem item
+    ) {
+
+        if (uuid == null || item == null) {
+            return;
+        }
+
+        for (StatModifier modifier :
+                item.getStatModifiers()) {
+
+            if (modifier == null) {
+                continue;
+            }
+
+            addModifier(
+                    uuid,
+                    modifier
+            );
+        }
+    }
+
+    // ==================================================
+    // REMOVE RPG ITEM
+    // ==================================================
+
+    public void removeItem(
+            UUID uuid,
+            RPGItem item
+    ) {
+
+        if (uuid == null || item == null) {
+            return;
+        }
+
+        for (StatModifier modifier :
+                item.getStatModifiers()) {
+
+            if (modifier == null) {
+                continue;
+            }
+
+            removeModifier(
+                    uuid,
+                    modifier.getId()
+            );
         }
     }
 
@@ -89,9 +428,21 @@ public class StatManager {
         for (StatModifier modifier :
                 rpgClass.getStatModifiers()) {
 
+            if (modifier == null) {
+                continue;
+            }
+
+            StatModifier classModifier =
+                    new StatModifier(
+                            "class_" + modifier.getId(),
+                            modifier.getType(),
+                            modifier.getModifierType(),
+                            modifier.getAmount()
+                    );
+
             addModifier(
                     uuid,
-                    modifier
+                    classModifier
             );
         }
     }
@@ -112,15 +463,20 @@ public class StatManager {
         for (StatModifier modifier :
                 rpgClass.getStatModifiers()) {
 
+            if (modifier == null) {
+                continue;
+            }
+
             removeModifier(
                     uuid,
-                    modifier.getId()
+                    "class_" +
+                            modifier.getId()
             );
         }
     }
 
     // ==================================================
-    // CLEAR
+    // CLEAR MODIFIERS
     // ==================================================
 
     public void clearModifiers(
@@ -131,187 +487,35 @@ public class StatManager {
             return;
         }
 
-        modifiers.remove(uuid);
-    }
-
-    // ==================================================
-    // GET STAT
-    // ==================================================
-
-    public double getStat(
-            UUID uuid,
-            StatsContainer baseStats,
-            StatType type
-    ) {
-
-        if (baseStats == null || type == null) {
-            return 0.0;
-        }
-
-        double baseValue =
-                getBaseStat(
-                        baseStats,
-                        type
-                );
-
-        double flatBonus = 0.0;
-        double percentBonus = 0.0;
-
-        List<StatModifier> list =
-                modifiers.get(uuid);
-
-        if (list != null) {
-
-            for (StatModifier modifier :
-                    list) {
-
-                if (modifier.getType() != type) {
-                    continue;
-                }
-
-                if (modifier.getModifierType()
-                        == ModifierType.FLAT) {
-
-                    flatBonus +=
-                            modifier.getAmount();
-
-                } else if (
-                        modifier.getModifierType()
-                                == ModifierType.PERCENT
-                ) {
-
-                    percentBonus +=
-                            modifier.getAmount();
-                }
-            }
-        }
-
-        double finalValue =
-                baseValue + flatBonus;
-
-        finalValue *=
-                1.0
-                        + (
-                        percentBonus / 100.0
-                );
-
-        return Math.max(
-                0.0,
-                finalValue
+        modifiers.remove(
+                uuid
         );
     }
 
     // ==================================================
-    // BASE STAT
+    // CLEAR PLAYER
     // ==================================================
 
-    private double getBaseStat(
-            StatsContainer stats,
-            StatType type
+    public void clear(
+            UUID uuid
     ) {
 
-        return switch (type) {
+        if (uuid == null) {
+            return;
+        }
 
-            // =========================
-            // OFFENSE
-            // =========================
+        baseStats.remove(uuid);
+        modifiers.remove(uuid);
+    }
 
-            case ATTACK ->
-                    stats.getAttack();
+    // ==================================================
+    // REMOVE PLAYER
+    // ==================================================
 
-            case MAGIC_ATTACK ->
-                    stats.getMagicAttack();
+    public void remove(
+            UUID uuid
+    ) {
 
-            case ATTACK_SPEED ->
-                    stats.getAttackSpeed();
-
-            case CRIT_CHANCE ->
-                    stats.getCritChance();
-
-            case CRIT_DAMAGE ->
-                    stats.getCritDamage();
-
-            case CRIT_RESISTANCE ->
-                    stats.getCritResistance();
-
-            case ARMOR_PENETRATION ->
-                    stats.getArmorPenetration();
-
-            case MAGIC_PENETRATION ->
-                    stats.getMagicPenetration();
-
-            case SKILL_DAMAGE ->
-                    stats.getSkillDamage();
-
-            // =========================
-            // DEFENSE
-            // =========================
-
-            case DEFENSE ->
-                    stats.getDefense();
-
-            case MAGIC_DEFENSE ->
-                    stats.getMagicDefense();
-
-            case DAMAGE_REDUCTION ->
-                    stats.getDamageReduction();
-
-            case BLOCK_CHANCE ->
-                    stats.getBlockChance();
-
-            case BLOCK_POWER ->
-                    stats.getBlockPower();
-
-            case DODGE_CHANCE ->
-                    stats.getDodgeChance();
-
-            // =========================
-            // HEALTH / MANA
-            // =========================
-
-            case MAX_HEALTH ->
-                    stats.getMaxHealth();
-
-            case MAX_MANA ->
-                    stats.getMaxMana();
-
-            case HEALTH_REGEN ->
-                    stats.getHealthRegen();
-
-            case MANA_REGEN ->
-                    stats.getManaRegen();
-
-            case LIFESTEAL ->
-                    stats.getLifesteal();
-
-            case MANA_STEAL ->
-                    stats.getManaSteal();
-
-            case COOLDOWN_REDUCTION ->
-                    stats.getCooldownReduction();
-
-            // =========================
-            // MOVEMENT
-            // =========================
-
-            case MOVE_SPEED ->
-                    stats.getMoveSpeed();
-
-            // =========================
-            // UTILITY
-            // =========================
-
-            case EXP_BONUS ->
-                    stats.getExpBonus();
-
-            case GOLD_BONUS ->
-                    stats.getGoldBonus();
-
-            case DROP_RATE ->
-                    stats.getDropRate();
-
-            case LUCK ->
-                    stats.getLuck();
-        };
+        clear(uuid);
     }
 }

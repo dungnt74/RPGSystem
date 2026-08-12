@@ -1,10 +1,6 @@
 package dungnt.rpg.combat;
 
 import dungnt.rpg.MyRPG;
-import dungnt.rpg.mob.MobData;
-import dungnt.rpg.mob.MobStats;
-import dungnt.rpg.player.PlayerData;
-import dungnt.rpg.player.PlayerStats;
 import dungnt.rpg.stats.StatManager;
 import dungnt.rpg.stats.StatType;
 
@@ -14,10 +10,18 @@ import org.bukkit.entity.Player;
 public class CombatService {
 
     private final MyRPG plugin;
+
     private final DamageCalculator damageCalculator;
+
     private final StatManager statManager;
 
-    public CombatService(MyRPG plugin) {
+    // ==================================================
+    // CONSTRUCTOR
+    // ==================================================
+
+    public CombatService(
+            MyRPG plugin
+    ) {
 
         this.plugin = plugin;
 
@@ -29,635 +33,357 @@ public class CombatService {
     }
 
     // ==================================================
-    // MAGIC DAMAGE
-    // ==================================================
-
-    public DamageResult magicDamage(
-            Player attacker,
-            LivingEntity target,
-            double skillMultiplier
-    ) {
-
-        PlayerData attackerData =
-                plugin.getPlayerManager()
-                        .getData(attacker);
-
-        if (attackerData == null) {
-            return new DamageResult(0, false);
-        }
-
-        PlayerStats attackerStats =
-                attackerData.getStats();
-
-        // =========================
-        // MAGIC ATTACK
-        // =========================
-
-        double magicAttack =
-                statManager.getStat(
-                        attacker.getUniqueId(),
-                        attackerStats,
-                        StatType.MAGIC_ATTACK
-                );
-
-        if (magicAttack <= 0) {
-            return new DamageResult(0, false);
-        }
-
-        // =========================
-        // CRIT
-        // =========================
-
-        double critChance =
-                statManager.getStat(
-                        attacker.getUniqueId(),
-                        attackerStats,
-                        StatType.CRIT_CHANCE
-                );
-
-        double critDamage =
-                statManager.getStat(
-                        attacker.getUniqueId(),
-                        attackerStats,
-                        StatType.CRIT_DAMAGE
-                );
-
-        // =========================
-        // MAGIC PENETRATION
-        // =========================
-
-        double magicPenetration =
-                statManager.getStat(
-                        attacker.getUniqueId(),
-                        attackerStats,
-                        StatType.MAGIC_PENETRATION
-                );
-
-        // =========================
-        // RAW MAGIC DAMAGE
-        // =========================
-
-        DamageResult result =
-                damageCalculator.calculateMagic(
-                        magicAttack,
-                        critChance,
-                        critDamage,
-                        skillMultiplier
-                );
-
-        double damage =
-                result.getDamage();
-
-        // =========================
-        // DODGE
-        // =========================
-
-        double dodgeChance =
-                getDodgeChance(target);
-
-        if (damageCalculator.isDodged(dodgeChance)) {
-
-            attacker.sendMessage(
-                    "§b§l✦ DODGE!"
-            );
-
-            return new DamageResult(
-                    0,
-                    result.isCritical()
-            );
-        }
-
-        // =========================
-        // MAGIC DEFENSE
-        // =========================
-
-        double magicDefense =
-                getMagicDefense(target);
-
-        damage =
-                damageCalculator.applyMagicDefense(
-                        damage,
-                        magicDefense,
-                        magicPenetration
-                );
-
-        // =========================
-        // DAMAGE REDUCTION
-        // =========================
-
-        double damageReduction =
-                getDamageReduction(target);
-
-        damage =
-                damageCalculator.applyDamageReduction(
-                        damage,
-                        damageReduction
-                );
-
-        // =========================
-        // BLOCK
-        // =========================
-
-        double blockChance =
-                getBlockChance(target);
-
-        double blockPower =
-                getBlockPower(target);
-
-        damage =
-                damageCalculator.applyBlock(
-                        damage,
-                        blockChance,
-                        blockPower
-                );
-
-        // =========================
-        // FINAL DAMAGE
-        // =========================
-
-        damage =
-                Math.max(
-                        0,
-                        damage
-                );
-
-        // =========================
-        // APPLY RPG DAMAGE
-        // =========================
-
-        applyRpgDamage(
-                target,
-                damage
-        );
-
-        // =========================
-        // FLOATING MAGIC DAMAGE
-        // =========================
-
-        if (damage > 0) {
-
-            plugin.getFloatingDamage().show(
-                    target,
-                    damage,
-                    result.isCritical(),
-                    true
-            );
-        }
-
-        return new DamageResult(
-                damage,
-                result.isCritical()
-        );
-    }
-
-    // ==================================================
     // PHYSICAL DAMAGE
     // ==================================================
 
     public DamageResult damage(
             Player attacker,
             LivingEntity target,
-            double skillMultiplier
+            double multiplier
     ) {
 
-        PlayerData attackerData =
-                plugin.getPlayerManager()
-                        .getData(attacker);
+        if (attacker == null ||
+                target == null) {
 
-        if (attackerData == null) {
-            return new DamageResult(0, false);
+            return new DamageResult(
+                    0,
+                    false
+            );
         }
 
-        PlayerStats attackerStats =
-                attackerData.getStats();
+        if (!target.isValid() ||
+                target.isDead()) {
 
-        // =========================
-        // ATTACK
-        // =========================
+            return new DamageResult(
+                    0,
+                    false
+            );
+        }
+
+        if (multiplier <= 0) {
+
+            return new DamageResult(
+                    0,
+                    false
+            );
+        }
+
+        // ==================================================
+        // FINAL ATTACK
+        // ==================================================
 
         double attack =
                 statManager.getStat(
                         attacker.getUniqueId(),
-                        attackerStats,
                         StatType.ATTACK
                 );
 
-        if (attack <= 0) {
-            return new DamageResult(0, false);
-        }
-
-        // =========================
+        // ==================================================
         // CRIT
-        // =========================
+        // ==================================================
 
         double critChance =
                 statManager.getStat(
                         attacker.getUniqueId(),
-                        attackerStats,
                         StatType.CRIT_CHANCE
                 );
 
         double critDamage =
                 statManager.getStat(
                         attacker.getUniqueId(),
-                        attackerStats,
                         StatType.CRIT_DAMAGE
                 );
 
-        // =========================
-        // ARMOR PENETRATION
-        // =========================
-
-        double armorPenetration =
-                statManager.getStat(
-                        attacker.getUniqueId(),
-                        attackerStats,
-                        StatType.ARMOR_PENETRATION
+        double critMultiplier =
+                normalizeCritDamage(
+                        critDamage
                 );
 
-        // =========================
-        // RAW DAMAGE
-        // =========================
+        // ==================================================
+        // CALCULATE
+        // ==================================================
 
         DamageResult result =
                 damageCalculator.calculate(
                         attack,
                         critChance,
-                        critDamage,
-                        skillMultiplier
+                        critMultiplier,
+                        multiplier
                 );
 
-        double damage =
-                result.getDamage();
-
-        // =========================
-        // DODGE
-        // =========================
-
-        double dodgeChance =
-                getDodgeChance(target);
-
-        if (damageCalculator.isDodged(dodgeChance)) {
-
-            attacker.sendMessage(
-                    "§b§l✦ DODGE!"
-            );
-
-            return new DamageResult(
-                    0,
-                    result.isCritical()
-            );
-        }
-
-        // =========================
-        // DEFENSE
-        // =========================
+        // ==================================================
+        // TARGET DEFENSE
+        // ==================================================
 
         double defense =
-                getDefense(target);
+                getTargetDefense(
+                        target
+                );
 
-        damage =
+        // ==================================================
+        // ARMOR PENETRATION
+        // ==================================================
+
+        double armorPenetration =
+                statManager.getStat(
+                        attacker.getUniqueId(),
+                        StatType.ARMOR_PENETRATION
+                );
+
+        // ==================================================
+        // APPLY DEFENSE
+        // ==================================================
+
+        double finalDamage =
                 damageCalculator.applyDefense(
-                        damage,
+                        result.getDamage(),
                         defense,
                         armorPenetration
                 );
 
-        // =========================
+        // ==================================================
         // DAMAGE REDUCTION
-        // =========================
+        // ==================================================
 
         double damageReduction =
-                getDamageReduction(target);
+                getTargetDamageReduction(
+                        target
+                );
 
-        damage =
+        finalDamage =
                 damageCalculator.applyDamageReduction(
-                        damage,
+                        finalDamage,
                         damageReduction
                 );
 
-        // =========================
-        // BLOCK
-        // =========================
-
-        double blockChance =
-                getBlockChance(target);
-
-        double blockPower =
-                getBlockPower(target);
-
-        damage =
-                damageCalculator.applyBlock(
-                        damage,
-                        blockChance,
-                        blockPower
-                );
-
-        // =========================
-        // FINAL DAMAGE
-        // =========================
-
-        damage =
-                Math.max(
-                        0,
-                        damage
-                );
-
-        // =========================
-        // APPLY RPG DAMAGE
-        // =========================
-
-        applyRpgDamage(
-                target,
-                damage
-        );
-
-        // =========================
-        // FLOATING PHYSICAL DAMAGE
-        // =========================
-
-        if (damage > 0) {
-
-            plugin.getFloatingDamage().show(
-                    target,
-                    damage,
-                    result.isCritical(),
-                    false
-            );
-        }
+        // ==================================================
+        // RETURN
+        // ==================================================
 
         return new DamageResult(
-                damage,
+                finalDamage,
                 result.isCritical()
         );
     }
 
     // ==================================================
-    // APPLY RPG DAMAGE
+    // MAGIC DAMAGE
     // ==================================================
 
-    private void applyRpgDamage(
+    public DamageResult magicDamage(
+            Player attacker,
             LivingEntity target,
-            double damage
+            double multiplier
     ) {
 
-        if (damage <= 0 || target.isDead()) {
-            return;
+        if (attacker == null ||
+                target == null) {
+
+            return new DamageResult(
+                    0,
+                    false
+            );
         }
 
-        double currentHealth =
-                target.getHealth();
+        if (!target.isValid() ||
+                target.isDead()) {
 
-        double newHealth =
-                Math.max(
-                        0,
-                        currentHealth - damage
+            return new DamageResult(
+                    0,
+                    false
+            );
+        }
+
+        if (multiplier <= 0) {
+
+            return new DamageResult(
+                    0,
+                    false
+            );
+        }
+
+        // ==================================================
+        // MAGIC ATTACK
+        // ==================================================
+
+        double magicAttack =
+                statManager.getStat(
+                        attacker.getUniqueId(),
+                        StatType.MAGIC_ATTACK
                 );
 
-        // Chỉ trừ HP RPG.
-        //
-        // KHÔNG dùng:
-        //
-        // target.damage(damage);
-        //
-        // vì sẽ tạo EntityDamageByEntityEvent
-        // và có thể gây double damage.
+        // ==================================================
+        // CRIT
+        // ==================================================
 
-        target.setHealth(newHealth);
+        double critChance =
+                statManager.getStat(
+                        attacker.getUniqueId(),
+                        StatType.CRIT_CHANCE
+                );
+
+        double critDamage =
+                statManager.getStat(
+                        attacker.getUniqueId(),
+                        StatType.CRIT_DAMAGE
+                );
+
+        double critMultiplier =
+                normalizeCritDamage(
+                        critDamage
+                );
+
+        // ==================================================
+        // CALCULATE
+        // ==================================================
+
+        DamageResult result =
+                damageCalculator.calculateMagic(
+                        magicAttack,
+                        critChance,
+                        critMultiplier,
+                        multiplier
+                );
+
+        // ==================================================
+        // MAGIC DEFENSE
+        // ==================================================
+
+        double magicDefense =
+                getTargetMagicDefense(
+                        target
+                );
+
+        // ==================================================
+        // MAGIC PENETRATION
+        // ==================================================
+
+        double magicPenetration =
+                statManager.getStat(
+                        attacker.getUniqueId(),
+                        StatType.MAGIC_PENETRATION
+                );
+
+        // ==================================================
+        // APPLY MAGIC DEFENSE
+        // ==================================================
+
+        double finalDamage =
+                damageCalculator.applyMagicDefense(
+                        result.getDamage(),
+                        magicDefense,
+                        magicPenetration
+                );
+
+        // ==================================================
+        // DAMAGE REDUCTION
+        // ==================================================
+
+        double damageReduction =
+                getTargetDamageReduction(
+                        target
+                );
+
+        finalDamage =
+                damageCalculator.applyDamageReduction(
+                        finalDamage,
+                        damageReduction
+                );
+
+        // ==================================================
+        // RETURN
+        // ==================================================
+
+        return new DamageResult(
+                finalDamage,
+                result.isCritical()
+        );
     }
 
     // ==================================================
-    // MAGIC DEFENSE
+    // TARGET DEFENSE
     // ==================================================
 
-    private double getMagicDefense(
+    private double getTargetDefense(
             LivingEntity target
     ) {
 
-        if (target instanceof Player player) {
+        if (!(target instanceof Player player)) {
 
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
-
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.MAGIC_DEFENSE
-            );
+            /*
+             * Mob sẽ được nối với
+             * MobStatsManager sau.
+             */
+            return 0;
         }
 
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            return mobData
-                    .getStats()
-                    .getMagicDefense();
-        }
-
-        return 0.0;
+        return statManager.getStat(
+                player.getUniqueId(),
+                StatType.DEFENSE
+        );
     }
 
     // ==================================================
-    // PHYSICAL DEFENSE
+    // TARGET MAGIC DEFENSE
     // ==================================================
 
-    private double getDefense(
+    private double getTargetMagicDefense(
             LivingEntity target
     ) {
 
-        if (target instanceof Player player) {
+        if (!(target instanceof Player player)) {
 
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
-
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.DEFENSE
-            );
+            return 0;
         }
 
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            MobStats mobStats =
-                    mobData.getStats();
-
-            return mobStats.getDefense();
-        }
-
-        return 0.0;
+        return statManager.getStat(
+                player.getUniqueId(),
+                StatType.MAGIC_DEFENSE
+        );
     }
 
     // ==================================================
-    // DAMAGE REDUCTION
+    // TARGET DAMAGE REDUCTION
     // ==================================================
 
-    private double getDamageReduction(
+    private double getTargetDamageReduction(
             LivingEntity target
     ) {
 
-        if (target instanceof Player player) {
+        if (!(target instanceof Player player)) {
 
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
-
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.DAMAGE_REDUCTION
-            );
+            return 0;
         }
 
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            return mobData
-                    .getStats()
-                    .getDamageReduction();
-        }
-
-        return 0.0;
+        return statManager.getStat(
+                player.getUniqueId(),
+                StatType.DAMAGE_REDUCTION
+        );
     }
 
     // ==================================================
-    // BLOCK CHANCE
+    // CRIT DAMAGE
     // ==================================================
 
-    private double getBlockChance(
-            LivingEntity target
+    private double normalizeCritDamage(
+            double critDamage
     ) {
 
-        if (target instanceof Player player) {
+        /*
+         * StatManager lưu Crit Damage theo %.
+         *
+         * 150 → 1.5x
+         * 200 → 2.0x
+         *
+         * Nếu chưa có Crit Damage:
+         * → 1.0x
+         */
 
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
+        if (critDamage <= 0) {
 
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.BLOCK_CHANCE
-            );
+            return 1.0;
         }
 
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            return mobData
-                    .getStats()
-                    .getBlockChance();
-        }
-
-        return 0.0;
-    }
-
-    // ==================================================
-    // BLOCK POWER
-    // ==================================================
-
-    private double getBlockPower(
-            LivingEntity target
-    ) {
-
-        if (target instanceof Player player) {
-
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
-
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.BLOCK_POWER
-            );
-        }
-
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            return mobData
-                    .getStats()
-                    .getBlockPower();
-        }
-
-        return 0.0;
-    }
-
-    // ==================================================
-    // DODGE CHANCE
-    // ==================================================
-
-    private double getDodgeChance(
-            LivingEntity target
-    ) {
-
-        if (target instanceof Player player) {
-
-            PlayerData playerData =
-                    plugin.getPlayerManager()
-                            .getData(player);
-
-            if (playerData == null) {
-                return 0.0;
-            }
-
-            return statManager.getStat(
-                    player.getUniqueId(),
-                    playerData.getStats(),
-                    StatType.DODGE_CHANCE
-            );
-        }
-
-        MobData mobData =
-                plugin.getMobManager()
-                        .getMob(target);
-
-        if (mobData != null) {
-
-            return mobData
-                    .getStats()
-                    .getDodgeChance();
-        }
-
-        return 0.0;
+        return critDamage / 100.0;
     }
 }
