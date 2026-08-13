@@ -36,3 +36,19 @@ commands:
   equipment:
     description: Xem trang bị
     usage: /equipment
+
+  itemstat:
+    description: Thêm và xoá stat cho item đang cầm
+    usage: /itemstat <add|remove|clear>
+
+  team:
+    description: Quản lý team
+    usage: /team
+
+  socket:
+    description: Mở hệ thống socket
+    usage: /socket
+
+  itemsocket:
+    description: Tạo và chỉnh sửa Gem
+    usage: /itemsocket <name|special|addstat|lore|setlevel>

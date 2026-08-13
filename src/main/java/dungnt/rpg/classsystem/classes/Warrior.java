@@ -34,7 +34,7 @@ public class Warrior extends RPGClass {
                         "class_warrior_crit_damage",
                         StatType.CRIT_DAMAGE,
                         ModifierType.FLAT,
-                        0.25
+                        25
                 )
         );
 

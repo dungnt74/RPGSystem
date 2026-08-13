@@ -384,6 +384,15 @@ public class CombatService {
             return 1.0;
         }
 
+        /*
+         * CRIT_DAMAGE được lưu thống nhất theo %.
+         *
+         * 150 = 150% = 1.5x
+         * 175 = 175% = 1.75x
+         *
+         * Không dùng 1.5 ở PlayerStats nữa,
+         * tránh trường hợp stat hiển thị sai kiểu 1700%.
+         */
         return critDamage / 100.0;
     }
 }

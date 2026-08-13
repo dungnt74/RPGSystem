@@ -11,12 +11,20 @@ import dungnt.rpg.combat.RPGMobCombatListener;
 import dungnt.rpg.command.ClassCommand;
 import dungnt.rpg.command.EquipmentCommand;
 import dungnt.rpg.command.ItemTestCommand;
+import dungnt.rpg.command.ItemStatCommand;
 import dungnt.rpg.command.LevelCommand;
 import dungnt.rpg.command.MagicDamageTestCommand;
 import dungnt.rpg.command.MobTestCommand;
 import dungnt.rpg.command.SkillCommand;
 
 import dungnt.rpg.item.EquipmentListener;
+
+import dungnt.rpg.gui.ClassGUI;
+import dungnt.rpg.gui.ClassGUIListener;
+import dungnt.rpg.gui.EquipmentGUI;
+import dungnt.rpg.gui.EquipmentGUIListener;
+
+import dungnt.rpg.item.EquipmentItemManager;
 import dungnt.rpg.item.EquipmentManager;
 import dungnt.rpg.item.ItemManager;
 import dungnt.rpg.item.RPGItemManager;
@@ -38,6 +46,13 @@ import dungnt.rpg.stats.StatManager;
 import dungnt.rpg.stats.StatTestCommand;
 
 import org.bukkit.plugin.java.JavaPlugin;
+
+import dungnt.team.TeamCommand;
+import dungnt.team.TeamManager;
+import dungnt.socket.GemManager;
+import dungnt.socket.SocketCommand;
+import dungnt.socket.SocketGUI;
+import dungnt.socket.SocketListener;
 
 public final class MyRPG extends JavaPlugin {
 
@@ -70,15 +85,23 @@ public final class MyRPG extends JavaPlugin {
     // ==================================================
 
     private RPGItemManager rpgItemManager;
+
     private ItemManager itemManager;
+
+    private EquipmentItemManager equipmentItemManager;
+
     private EquipmentManager equipmentManager;
+
+    private EquipmentListener equipmentListener;
 
     // ==================================================
     // SKILL
     // ==================================================
 
     private SkillManager skillManager;
+
     private SkillService skillService;
+
     private CooldownManager cooldownManager;
 
     // ==================================================
@@ -86,7 +109,9 @@ public final class MyRPG extends JavaPlugin {
     // ==================================================
 
     private DamageCalculator damageCalculator;
+
     private CombatService combatService;
+
     private FloatingDamage floatingDamage;
 
     // ==================================================
@@ -94,7 +119,24 @@ public final class MyRPG extends JavaPlugin {
     // ==================================================
 
     private MobStatsManager mobStatsManager;
+
     private MobManager mobManager;
+
+    // ==================================================
+    // GUI
+    // ==================================================
+
+    private EquipmentGUI equipmentGUI;
+
+    private ClassGUI classGUI;
+
+    // ==================================================
+    // TEAM / SOCKET (outside dungnt.rpg)
+    // ==================================================
+    private TeamManager teamManager;
+    private GemManager gemManager;
+    private SocketGUI socketGUI;
+
 
     // ==================================================
     // ENABLE
@@ -116,6 +158,7 @@ public final class MyRPG extends JavaPlugin {
         playerManager =
                 new PlayerManager(this);
 
+
         // ==================================================
         // SKILL
         // ==================================================
@@ -125,6 +168,7 @@ public final class MyRPG extends JavaPlugin {
 
         cooldownManager =
                 new CooldownManager();
+
 
         // ==================================================
         // ITEM SYSTEM
@@ -136,10 +180,41 @@ public final class MyRPG extends JavaPlugin {
         itemManager =
                 new ItemManager(this);
 
+        equipmentItemManager =
+                new EquipmentItemManager(
+                        itemManager
+                );
+
         equipmentManager =
                 new EquipmentManager(
                         statManager
                 );
+
+
+        // ==================================================
+        // GUI
+        // ==================================================
+
+        equipmentGUI =
+                new EquipmentGUI(this);
+
+        classGUI =
+                new ClassGUI(this);
+
+        teamManager = new TeamManager();
+        gemManager = new GemManager(this);
+        socketGUI = new SocketGUI(this);
+
+
+        // ==================================================
+        // EQUIPMENT LISTENER
+        // ==================================================
+
+        equipmentListener =
+                new EquipmentListener(
+                        this
+                );
+
 
         // ==================================================
         // REGISTER SAMPLE ITEMS
@@ -147,12 +222,14 @@ public final class MyRPG extends JavaPlugin {
 
         SampleItems.registerAll();
 
+
         // ==================================================
         // LEVEL
         // ==================================================
 
         levelManager =
                 new LevelManager(this);
+
 
         // ==================================================
         // COMBAT
@@ -167,12 +244,14 @@ public final class MyRPG extends JavaPlugin {
         combatService =
                 new CombatService(this);
 
+
         // ==================================================
         // SKILL SERVICE
         // ==================================================
 
         skillService =
                 new SkillService(this);
+
 
         // ==================================================
         // MOB
@@ -184,17 +263,20 @@ public final class MyRPG extends JavaPlugin {
         mobManager =
                 new MobManager();
 
+
         // ==================================================
         // EVENTS
         // ==================================================
 
         registerEvents();
 
+
         // ==================================================
         // COMMANDS
         // ==================================================
 
         registerCommands();
+
 
         // ==================================================
         // LOG
@@ -228,6 +310,7 @@ public final class MyRPG extends JavaPlugin {
         );
     }
 
+
     // ==================================================
     // EVENTS
     // ==================================================
@@ -245,6 +328,7 @@ public final class MyRPG extends JavaPlugin {
                         this
                 );
 
+
         // --------------------------------------------------
         // RPG COMBAT
         // --------------------------------------------------
@@ -256,12 +340,18 @@ public final class MyRPG extends JavaPlugin {
                         this
                 );
 
+
+        // --------------------------------------------------
+        // MOB COMBAT
+        // --------------------------------------------------
+
         getServer()
                 .getPluginManager()
                 .registerEvents(
                         new RPGMobCombatListener(this),
                         this
                 );
+
 
         // --------------------------------------------------
         // EQUIPMENT
@@ -270,10 +360,54 @@ public final class MyRPG extends JavaPlugin {
         getServer()
                 .getPluginManager()
                 .registerEvents(
-                        new EquipmentListener(this),
+                        equipmentListener,
                         this
                 );
+
+
+        // --------------------------------------------------
+        // EQUIPMENT GUI
+        // --------------------------------------------------
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new EquipmentGUIListener(
+                                this,
+                                equipmentGUI
+                        ),
+                        this
+                );
+
+
+        // --------------------------------------------------
+        // CLASS GUI
+        // --------------------------------------------------
+
+        getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new ClassGUIListener(
+                                this,
+                                classGUI
+                        ),
+                        this
+                );
+
+        // --------------------------------------------------
+        // TEAM
+        // --------------------------------------------------
+        getServer().getPluginManager().registerEvents(teamManager, this);
+
+        // --------------------------------------------------
+        // SOCKET
+        // --------------------------------------------------
+        getServer().getPluginManager().registerEvents(
+                new SocketListener(this, socketGUI),
+                this
+        );
     }
+
 
     // ==================================================
     // COMMANDS
@@ -289,9 +423,13 @@ public final class MyRPG extends JavaPlugin {
 
             getCommand("class")
                     .setExecutor(
-                            new ClassCommand(this)
+                            new ClassCommand(
+                                    this,
+                                    classGUI
+                            )
                     );
         }
+
 
         // --------------------------------------------------
         // SKILL
@@ -305,6 +443,7 @@ public final class MyRPG extends JavaPlugin {
                     );
         }
 
+
         // --------------------------------------------------
         // STAT
         // --------------------------------------------------
@@ -316,6 +455,7 @@ public final class MyRPG extends JavaPlugin {
                             new StatTestCommand(this)
                     );
         }
+
 
         // --------------------------------------------------
         // MOB
@@ -329,6 +469,7 @@ public final class MyRPG extends JavaPlugin {
                     );
         }
 
+
         // --------------------------------------------------
         // MAGIC DAMAGE
         // --------------------------------------------------
@@ -340,6 +481,7 @@ public final class MyRPG extends JavaPlugin {
                             new MagicDamageTestCommand(this)
                     );
         }
+
 
         // --------------------------------------------------
         // ITEM TEST
@@ -353,6 +495,20 @@ public final class MyRPG extends JavaPlugin {
                     );
         }
 
+
+        // --------------------------------------------------
+        // ITEM STAT
+        // --------------------------------------------------
+
+        if (getCommand("itemstat") != null) {
+
+            getCommand("itemstat")
+                    .setExecutor(
+                            new ItemStatCommand(this)
+                    );
+        }
+
+
         // --------------------------------------------------
         // EQUIPMENT
         // --------------------------------------------------
@@ -361,8 +517,32 @@ public final class MyRPG extends JavaPlugin {
 
             getCommand("equipment")
                     .setExecutor(
-                            new EquipmentCommand(this)
+                            new EquipmentCommand(
+                                    this,
+                                    equipmentGUI
+                            )
                     );
+        }
+
+
+        // --------------------------------------------------
+        // TEAM
+        // --------------------------------------------------
+
+        if (getCommand("team") != null) {
+            getCommand("team").setExecutor(new TeamCommand(teamManager));
+        }
+
+        // --------------------------------------------------
+        // SOCKET
+        // --------------------------------------------------
+
+        SocketCommand socketCommand = new SocketCommand(this);
+        if (getCommand("socket") != null) {
+            getCommand("socket").setExecutor(socketCommand);
+        }
+        if (getCommand("itemsocket") != null) {
+            getCommand("itemsocket").setExecutor(socketCommand);
         }
 
         // --------------------------------------------------
@@ -378,6 +558,7 @@ public final class MyRPG extends JavaPlugin {
         }
     }
 
+
     // ==================================================
     // DISABLE
     // ==================================================
@@ -385,20 +566,11 @@ public final class MyRPG extends JavaPlugin {
     @Override
     public void onDisable() {
 
-        if (equipmentManager != null) {
-
-            /*
-             * EquipmentManager chỉ giữ runtime data.
-             *
-             * Không cần lưu khi server shutdown
-             * ở phiên bản hiện tại.
-             */
-        }
-
         getLogger().info(
                 "DungNT RPG DISABLED"
         );
     }
+
 
     // ==================================================
     // CLASS GETTER
@@ -409,6 +581,7 @@ public final class MyRPG extends JavaPlugin {
         return classManager;
     }
 
+
     // ==================================================
     // PLAYER GETTER
     // ==================================================
@@ -417,6 +590,7 @@ public final class MyRPG extends JavaPlugin {
 
         return playerManager;
     }
+
 
     // ==================================================
     // STAT GETTER
@@ -427,6 +601,7 @@ public final class MyRPG extends JavaPlugin {
         return statManager;
     }
 
+
     // ==================================================
     // LEVEL GETTER
     // ==================================================
@@ -435,6 +610,7 @@ public final class MyRPG extends JavaPlugin {
 
         return levelManager;
     }
+
 
     // ==================================================
     // ITEM GETTERS
@@ -450,10 +626,21 @@ public final class MyRPG extends JavaPlugin {
         return itemManager;
     }
 
+    public EquipmentItemManager getEquipmentItemManager() {
+
+        return equipmentItemManager;
+    }
+
     public EquipmentManager getEquipmentManager() {
 
         return equipmentManager;
     }
+
+    public EquipmentListener getEquipmentListener() {
+
+        return equipmentListener;
+    }
+
 
     // ==================================================
     // SKILL GETTERS
@@ -474,6 +661,7 @@ public final class MyRPG extends JavaPlugin {
         return cooldownManager;
     }
 
+
     // ==================================================
     // COMBAT GETTERS
     // ==================================================
@@ -493,6 +681,7 @@ public final class MyRPG extends JavaPlugin {
         return floatingDamage;
     }
 
+
     // ==================================================
     // MOB GETTERS
     // ==================================================
@@ -505,5 +694,20 @@ public final class MyRPG extends JavaPlugin {
     public MobManager getMobManager() {
 
         return mobManager;
+    }
+
+
+    // ==================================================
+    // GUI GETTERS
+    // ==================================================
+
+    public EquipmentGUI getEquipmentGUI() {
+
+        return equipmentGUI;
+    }
+
+    public ClassGUI getClassGUI() {
+
+        return classGUI;
     }
 }

@@ -1,28 +1,42 @@
 package dungnt.rpg.command;
 
 import dungnt.rpg.MyRPG;
-import dungnt.rpg.item.EquipmentSlot;
+import dungnt.rpg.gui.EquipmentGUI;
 import dungnt.rpg.item.EquipmentManager;
-import dungnt.rpg.item.RPGItem;
+import dungnt.rpg.item.EquipmentSlot;
+import dungnt.rpg.item.ItemManager;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.Map;
+import java.util.Locale;
 
-public class EquipmentCommand implements CommandExecutor {
+public class EquipmentCommand
+        implements CommandExecutor {
 
     private final MyRPG plugin;
     private final EquipmentManager equipmentManager;
+    private final EquipmentGUI equipmentGUI;
+    private final ItemManager itemManager;
 
-    public EquipmentCommand(MyRPG plugin) {
+    public EquipmentCommand(
+            MyRPG plugin,
+            EquipmentGUI equipmentGUI
+    ) {
 
         this.plugin = plugin;
 
         this.equipmentManager =
                 plugin.getEquipmentManager();
+
+        this.equipmentGUI =
+                equipmentGUI;
+
+        this.itemManager =
+                plugin.getItemManager();
     }
 
     @Override
@@ -48,7 +62,114 @@ public class EquipmentCommand implements CommandExecutor {
 
         if (args.length == 0) {
 
-            showEquipment(player);
+            equipmentGUI.open(player);
+            return true;
+        }
+
+        // ==================================================
+        // /EQUIPMENT ADDSLOT <SLOT>
+        // ==================================================
+
+        if (args[0].equalsIgnoreCase("addslot")
+                || args[0].equalsIgnoreCase("slot")
+                || args[0].equalsIgnoreCase("setslot")) {
+
+            if (args.length < 2) {
+
+                player.sendMessage(
+                        "§cDùng: §e/equipment addslot <slot>"
+                );
+
+                sendSlots(player);
+                return true;
+            }
+
+            EquipmentSlot slot =
+                    parseSlot(args[1]);
+
+            if (slot == null) {
+
+                player.sendMessage(
+                        "§cEquipment slot không hợp lệ."
+                );
+
+                sendSlots(player);
+                return true;
+            }
+
+            ItemStack item =
+                    player.getInventory()
+                            .getItemInMainHand();
+
+            if (item == null ||
+                    item.getType().isAir()) {
+
+                player.sendMessage(
+                        "§cHãy cầm item cần set slot."
+                );
+
+                return true;
+            }
+
+            if (!itemManager.setEquipmentSlot(
+                    item,
+                    slot
+            )) {
+
+                player.sendMessage(
+                        "§cKhông thể set equipment slot cho item."
+                );
+
+                return true;
+            }
+
+            player.getInventory()
+                    .setItemInMainHand(item);
+
+            player.sendMessage(
+                    "§aĐã set slot §e"
+                            + slot.name()
+                            + " §acho item đang cầm."
+            );
+
+            return true;
+        }
+
+        // ==================================================
+        // /EQUIPMENT REMOVESLOT
+        // ==================================================
+
+        if (args[0].equalsIgnoreCase("removeslot")) {
+
+            ItemStack item =
+                    player.getInventory()
+                            .getItemInMainHand();
+
+            if (item == null ||
+                    item.getType().isAir()) {
+
+                player.sendMessage(
+                        "§cHãy cầm item cần xoá slot."
+                );
+
+                return true;
+            }
+
+            if (!itemManager.removeEquipmentSlot(item)) {
+
+                player.sendMessage(
+                        "§cKhông thể xoá equipment slot."
+                );
+
+                return true;
+            }
+
+            player.getInventory()
+                    .setItemInMainHand(item);
+
+            player.sendMessage(
+                    "§aĐã xoá equipment slot khỏi item."
+            );
 
             return true;
         }
@@ -63,19 +184,89 @@ public class EquipmentCommand implements CommandExecutor {
                     player.getUniqueId()
             );
 
+            equipmentGUI.clear(
+                    player.getUniqueId()
+            );
+
             player.sendMessage(
-                    "§aĐã tháo toàn bộ trang bị."
+                    "§aĐã xoá toàn bộ equipment đang trang bị."
             );
 
             return true;
         }
 
-        // ==================================================
-        // HELP
-        // ==================================================
+        sendHelp(player);
+        return true;
+    }
+
+    // ==================================================
+    // PARSE SLOT
+    // ==================================================
+
+    private EquipmentSlot parseSlot(
+            String value
+    ) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String normalized =
+                value
+                        .toUpperCase(Locale.ROOT)
+                        .replace("-", "")
+                        .replace("_", "");
+
+        for (EquipmentSlot slot :
+                EquipmentSlot.values()) {
+
+            String slotName =
+                    slot.name()
+                            .replace("_", "");
+
+            if (slotName.equals(normalized)) {
+                return slot;
+            }
+        }
+
+        return null;
+    }
+
+    // ==================================================
+    // SLOTS
+    // ==================================================
+
+    private void sendSlots(
+            Player player
+    ) {
 
         player.sendMessage(
-                "§cDùng:"
+                "§7Slots: §eMAIN_HAND, OFF_HAND, HELMET, CHESTPLATE, LEGGINGS, BOOTS"
+        );
+
+        player.sendMessage(
+                "§7        §eBELT, GLOVES, JADE, RING1, RING2, EARRING, NECKLACE"
+        );
+
+        player.sendMessage(
+                "§7        §eWINGS, BADGE, PET, MOUNT"
+        );
+    }
+
+    // ==================================================
+    // HELP
+    // ==================================================
+
+    private void sendHelp(
+            Player player
+    ) {
+
+        player.sendMessage(
+                "§8§m--------------------------"
+        );
+
+        player.sendMessage(
+                "§6§lEQUIPMENT"
         );
 
         player.sendMessage(
@@ -83,120 +274,19 @@ public class EquipmentCommand implements CommandExecutor {
         );
 
         player.sendMessage(
+                "§7/equipment addslot <slot>"
+        );
+
+        player.sendMessage(
+                "§7/equipment removeslot"
+        );
+
+        player.sendMessage(
                 "§7/equipment clear"
         );
 
-        return true;
-    }
-
-    // ==================================================
-    // SHOW EQUIPMENT
-    // ==================================================
-
-    private void showEquipment(
-            Player player
-    ) {
-
-        Map<EquipmentSlot, RPGItem> equipment =
-                equipmentManager.getEquipment(
-                        player.getUniqueId()
-                );
-
         player.sendMessage(
-                "§8§m--------------------------------"
+                "§8§m--------------------------"
         );
-
-        player.sendMessage(
-                "§6§l✦ EQUIPMENT"
-        );
-
-        for (EquipmentSlot slot :
-                EquipmentSlot.values()) {
-
-            RPGItem item =
-                    equipment.get(slot);
-
-            if (item == null) {
-
-                player.sendMessage(
-                        "§7"
-                                + getSlotName(slot)
-                                + ": §8Trống"
-                );
-
-            } else {
-
-                player.sendMessage(
-                        "§7"
-                                + getSlotName(slot)
-                                + ": §a"
-                                + item.getName()
-                );
-            }
-        }
-
-        player.sendMessage(
-                "§8§m--------------------------------"
-        );
-    }
-
-    // ==================================================
-    // SLOT NAME
-    // ==================================================
-
-    private String getSlotName(
-            EquipmentSlot slot
-    ) {
-
-        return switch (slot) {
-
-            case MAIN_HAND ->
-                    "Tay chính";
-
-            case OFF_HAND ->
-                    "Tay phụ";
-
-            case HELMET ->
-                    "Mũ";
-
-            case CHESTPLATE ->
-                    "Áo";
-
-            case LEGGINGS ->
-                    "Quần";
-
-            case BOOTS ->
-                    "Giày";
-
-            case BELT ->
-                    "Đai lưng";
-
-            case GLOVES ->
-                    "Găng tay";
-
-            case JADE ->
-                    "Ngọc bội";
-
-            case RING ->
-                    "Nhẫn";
-
-            case EARRING ->
-                    "Khuyên tai";
-
-            case NECKLACE ->
-                    "Vòng cổ";
-
-            case WINGS ->
-                    "Cánh";
-
-            case BADGE ->
-                    "Huy hiệu";
-
-            case PET ->
-                    "Thú cưng";
-
-            case MOUNT ->
-                    "Thú cưỡi";
-        };
     }
 }

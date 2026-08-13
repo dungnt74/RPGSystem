@@ -13,7 +13,7 @@ public class PlayerStats implements StatsContainer {
     private double attackSpeed = 0.0;
 
     private double critChance = 0.0;
-    private double critDamage = 1.5;
+    private double critDamage = 150.0;
     private double critResistance = 0.0;
 
     private double armorPenetration = 0.0;
@@ -111,7 +111,7 @@ public class PlayerStats implements StatsContainer {
     }
 
     public void setCritDamage(double critDamage) {
-        this.critDamage = Math.max(1.0, critDamage);
+        this.critDamage = Math.max(100.0, critDamage);
     }
 
     public double getCritResistance() {
@@ -288,5 +288,50 @@ public class PlayerStats implements StatsContainer {
 
     public void setLuck(double luck) {
         this.luck = Math.max(0, luck);
+    }
+
+
+    // ==================================================
+    // RESET ALL BASE STATS
+    // ==================================================
+
+    public void resetAllToZero() {
+
+        attack = 0.0;
+        magicAttack = 0.0;
+        attackSpeed = 0.0;
+
+        critChance = 0.0;
+        critDamage = 0.0;
+        critResistance = 0.0;
+
+        armorPenetration = 0.0;
+        magicPenetration = 0.0;
+        skillDamage = 0.0;
+
+        defense = 0.0;
+        magicDefense = 0.0;
+        damageReduction = 0.0;
+
+        blockChance = 0.0;
+        blockPower = 0.0;
+        dodgeChance = 0.0;
+
+        maxHealth = 0.0;
+        maxMana = 0.0;
+
+        healthRegen = 0.0;
+        manaRegen = 0.0;
+
+        lifesteal = 0.0;
+        manaSteal = 0.0;
+        cooldownReduction = 0.0;
+
+        moveSpeed = 0.0;
+
+        expBonus = 0.0;
+        goldBonus = 0.0;
+        dropRate = 0.0;
+        luck = 0.0;
     }
 }

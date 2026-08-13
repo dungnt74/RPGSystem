@@ -25,7 +25,8 @@ public enum EquipmentSlot {
     BELT,
     GLOVES,
     JADE,
-    RING,
+    RING1,
+    RING2,
     EARRING,
     NECKLACE,
 

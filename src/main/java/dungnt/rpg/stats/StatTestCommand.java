@@ -102,7 +102,7 @@ public class StatTestCommand implements CommandExecutor {
                 "§6✦ Crit Damage: §f"
                         + String.format(
                         "%.1f%%",
-                        critDamage * 100
+                        critDamage
                 )
         );
 

@@ -2,6 +2,7 @@ package dungnt.rpg.command;
 
 import dungnt.rpg.MyRPG;
 import dungnt.rpg.classsystem.RPGClass;
+import dungnt.rpg.gui.ClassGUI;
 import dungnt.rpg.player.PlayerData;
 
 import org.bukkit.command.Command;
@@ -13,8 +14,17 @@ public class ClassCommand implements CommandExecutor {
 
     private final MyRPG plugin;
 
-    public ClassCommand(MyRPG plugin) {
+    private final ClassGUI classGUI;
+
+    public ClassCommand(
+            MyRPG plugin,
+            ClassGUI classGUI
+    ) {
+
         this.plugin = plugin;
+
+        this.classGUI =
+                classGUI;
     }
 
     @Override
@@ -48,10 +58,7 @@ public class ClassCommand implements CommandExecutor {
 
         if (args.length == 0) {
 
-            showCurrentClass(
-                    player,
-                    data
-            );
+            classGUI.open(player);
 
             return true;
         }
@@ -63,6 +70,27 @@ public class ClassCommand implements CommandExecutor {
         if (args[0].equalsIgnoreCase("list")) {
 
             showClassList(player);
+
+            return true;
+        }
+
+        // ==================================================
+        // /CLASS REMOVE
+        // ==================================================
+
+        if (args[0].equalsIgnoreCase("remove")
+                || args[0].equalsIgnoreCase("reset")) {
+
+            plugin.getPlayerManager()
+                    .removeClassAndResetStats(player);
+
+            player.sendMessage(
+                    "§aĐã xoá Class."
+            );
+
+            player.sendMessage(
+                    "§7Toàn bộ BASE STATS và modifier runtime đã được reset về 0."
+            );
 
             return true;
         }
@@ -329,6 +357,10 @@ public class ClassCommand implements CommandExecutor {
 
         player.sendMessage(
                 "§7/class choose <class>"
+        );
+
+        player.sendMessage(
+                "§7/class remove"
         );
 
         player.sendMessage(

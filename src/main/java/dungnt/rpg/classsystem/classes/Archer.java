@@ -43,7 +43,7 @@ public class Archer extends RPGClass {
                         "class_archer_crit_damage",
                         StatType.CRIT_DAMAGE,
                         ModifierType.FLAT,
-                        0.25
+                        25
                 )
         );
 

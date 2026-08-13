@@ -7,30 +7,29 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
 import java.util.UUID;
 
-public class EquipmentListener implements Listener {
+public class EquipmentListener
+        implements Listener {
 
     private final MyRPG plugin;
-
-    // ==================================================
-    // CONSTRUCTOR
-    // ==================================================
 
     public EquipmentListener(
             MyRPG plugin
     ) {
-
         this.plugin = plugin;
     }
 
     // ==================================================
-    // PLAYER JOIN
+    // JOIN
     // ==================================================
 
     @EventHandler
@@ -45,7 +44,20 @@ public class EquipmentListener implements Listener {
                 .getScheduler()
                 .runTask(
                         plugin,
-                        () -> refreshEquipment(player)
+                        () -> {
+
+                            /*
+                             * Quan trọng:
+                             *
+                             * PlayerStats mặc định Attack = 10.
+                             * Nếu không gọi getData() trước combat,
+                             * StatManager chưa có base stat.
+                             */
+                            plugin.getPlayerManager()
+                                    .getData(player);
+
+                            refreshEquipment(player);
+                        }
                 );
     }
 
@@ -67,12 +79,19 @@ public class EquipmentListener implements Listener {
             return;
         }
 
-        plugin.getServer()
-                .getScheduler()
-                .runTask(
-                        plugin,
-                        () -> refreshEquipment(player)
-                );
+        /*
+         * Equipment GUI tự quản lý runtime.
+         * Không để listener này clear GUI equipment.
+         */
+        if (event.getView()
+                .getTopInventory()
+                .getHolder()
+                instanceof dungnt.rpg.gui.EquipmentGUI.EquipmentHolder) {
+
+            return;
+        }
+
+        scheduleRefresh(player);
     }
 
     // ==================================================
@@ -93,16 +112,60 @@ public class EquipmentListener implements Listener {
             return;
         }
 
-        plugin.getServer()
-                .getScheduler()
-                .runTask(
-                        plugin,
-                        () -> refreshEquipment(player)
-                );
+        if (event.getView()
+                .getTopInventory()
+                .getHolder()
+                instanceof dungnt.rpg.gui.EquipmentGUI.EquipmentHolder) {
+
+            return;
+        }
+
+        scheduleRefresh(player);
     }
 
     // ==================================================
-    // PLAYER QUIT
+    // HELD ITEM
+    // ==================================================
+
+    @EventHandler
+    public void onItemHeld(
+            PlayerItemHeldEvent event
+    ) {
+
+        scheduleRefresh(
+                event.getPlayer()
+        );
+    }
+
+    // ==================================================
+    // CLOSE
+    // ==================================================
+
+    @EventHandler
+    public void onInventoryClose(
+            InventoryCloseEvent event
+    ) {
+
+        if (!(event.getPlayer()
+                instanceof Player player)) {
+
+            return;
+        }
+
+        /*
+         * Không cần refresh ở đây cho GUI.
+         * EquipmentGUIListener đã xử lý.
+         */
+        if (event.getInventory()
+                .getHolder()
+                instanceof dungnt.rpg.gui.EquipmentGUI.EquipmentHolder) {
+
+            return;
+        }
+    }
+
+    // ==================================================
+    // QUIT
     // ==================================================
 
     @EventHandler
@@ -116,6 +179,22 @@ public class EquipmentListener implements Listener {
 
         plugin.getEquipmentManager()
                 .remove(uuid);
+    }
+
+    // ==================================================
+    // SCHEDULE REFRESH
+    // ==================================================
+
+    private void scheduleRefresh(
+            Player player
+    ) {
+
+        plugin.getServer()
+                .getScheduler()
+                .runTask(
+                        plugin,
+                        () -> refreshEquipment(player)
+                );
     }
 
     // ==================================================
@@ -135,8 +214,17 @@ public class EquipmentListener implements Listener {
         UUID uuid =
                 player.getUniqueId();
 
+        /*
+         * Đảm bảo BASE STATS luôn tồn tại.
+         *
+         * Đây là fix lỗi:
+         * "chưa chọn class thì đánh không gây damage".
+         */
+        plugin.getPlayerManager()
+                .getData(player);
+
         // ==================================================
-        // CLEAR CURRENT RPG EQUIPMENT
+        // CLEAR RUNTIME
         // ==================================================
 
         plugin.getEquipmentManager()
@@ -144,6 +232,12 @@ public class EquipmentListener implements Listener {
 
         // ==================================================
         // MAIN HAND
+        // ==================================================
+        //
+        // GUI không có MAIN_HAND.
+        // Tuy nhiên vũ khí cầm tay chính vẫn cộng damage.
+        //
+        // Item phải có equipment slot MAIN_HAND.
         // ==================================================
 
         syncItem(
@@ -153,74 +247,57 @@ public class EquipmentListener implements Listener {
         );
 
         // ==================================================
-        // OFF HAND
+        // VIRTUAL EQUIPMENT GUI
         // ==================================================
 
-        syncItem(
-                uuid,
-                player.getInventory()
-                        .getItemInOffHand()
-        );
+        if (plugin.getEquipmentGUI() != null) {
 
-        // ==================================================
-        // ARMOR
-        // ==================================================
+            Map<Integer, ItemStack> stored =
+                    plugin.getEquipmentGUI()
+                            .getStoredItems(uuid);
 
-        ItemStack[] armor =
-                player.getInventory()
-                        .getArmorContents();
+            for (ItemStack item :
+                    stored.values()) {
 
-        if (armor.length >= 4) {
-
-            // Bukkit armor order:
-            // 0 = boots
-            // 1 = leggings
-            // 2 = chestplate
-            // 3 = helmet
-
-            syncItem(
-                    uuid,
-                    armor[0]
-            );
-
-            syncItem(
-                    uuid,
-                    armor[1]
-            );
-
-            syncItem(
-                    uuid,
-                    armor[2]
-            );
-
-            syncItem(
-                    uuid,
-                    armor[3]
-            );
+                syncItem(
+                        uuid,
+                        item
+                );
+            }
         }
 
-        // ==================================================
-        // FUTURE RPG SLOTS
-        // ==================================================
-        //
-        // Đai lưng
-        // Găng tay
-        // Ngọc bội
-        // Nhẫn
-        // Khuyên tai
-        // Vòng cổ
-        // Cánh
-        // Huy hiệu
-        // Thú cưng
-        // Thú cưỡi
-        //
-        // Các slot này KHÔNG nằm trong
-        // Bukkit PlayerInventory mặc định.
-        //
-        // Khi có RPG Inventory riêng,
-        // listener sẽ sync chúng ở đây.
-        //
-        // ==================================================
+        // Socket stats are separate from RPGItem stats.
+        // Rebuild them after every equipment refresh so removing
+        // an item cannot leave stale gem modifiers behind.
+        if (plugin.getGemManager() != null) {
+            java.util.Map<String, dungnt.rpg.stats.StatModifier> current =
+                    plugin.getStatManager().getModifiers(uuid);
+
+            for (String id : new java.util.ArrayList<>(current.keySet())) {
+                if (id.startsWith("socket_")) {
+                    plugin.getStatManager().removeModifier(uuid, id);
+                }
+            }
+
+            ItemStack mainHand =
+                    player.getInventory().getItemInMainHand();
+
+            if (mainHand != null &&
+                    !mainHand.getType().isAir()) {
+                plugin.getGemManager()
+                        .applySocketStats(uuid, mainHand);
+            }
+
+            if (plugin.getEquipmentGUI() != null) {
+                for (ItemStack item :
+                        plugin.getEquipmentGUI()
+                                .getStoredItems(uuid)
+                                .values()) {
+                    plugin.getGemManager()
+                            .applySocketStats(uuid, item);
+                }
+            }
+        }
     }
 
     // ==================================================
@@ -232,33 +309,22 @@ public class EquipmentListener implements Listener {
             ItemStack itemStack
     ) {
 
-        if (uuid == null) {
-            return;
-        }
-
-        if (itemStack == null ||
+        if (uuid == null ||
+                itemStack == null ||
                 itemStack.getType().isAir()) {
 
             return;
         }
 
-        // ==================================================
-        // ITEMSTACK -> RPG ITEM
-        // ==================================================
-
         RPGItem rpgItem =
                 plugin.getItemManager()
-                        .fromItemStack(
-                                itemStack
-                        );
+                        .fromItemStack(itemStack);
 
-        if (rpgItem == null) {
+        if (rpgItem == null ||
+                rpgItem.getSlot() == null) {
+
             return;
         }
-
-        // ==================================================
-        // EQUIP
-        // ==================================================
 
         plugin.getEquipmentManager()
                 .equip(

@@ -41,10 +41,32 @@ public class PlayerManager {
             UUID uuid
     ) {
 
-        return players.computeIfAbsent(
-                uuid,
-                PlayerData::new
-        );
+        if (uuid == null) {
+            return null;
+        }
+
+        PlayerData data =
+                players.computeIfAbsent(
+                        uuid,
+                        PlayerData::new
+                );
+
+        /*
+         * PlayerStats là BASE STATS thực tế của player.
+         *
+         * StatManager dùng baseStats làm nền để tính:
+         * BASE + CLASS + LEVEL + EQUIPMENT.
+         *
+         * Vì vậy phải đồng bộ PlayerStats vào StatManager
+         * trước khi CombatService đọc stat.
+         */
+        plugin.getStatManager()
+                .syncBaseStats(
+                        uuid,
+                        data.getStats()
+                );
+
+        return data;
     }
 
     // ==================================================
@@ -82,6 +104,12 @@ public class PlayerManager {
                             uuid,
                             oldClass
                     );
+
+            plugin.getStatManager()
+                    .removeClassGrowth(
+                            uuid,
+                            oldClass
+                    );
         }
 
         // ==================================================
@@ -112,6 +140,69 @@ public class PlayerManager {
                 data.getLevel(),
                 plugin.getStatManager()
         );
+
+        /*
+         * Đổi class không được làm mất stat của equipment.
+         * Re-sync inventory thật sau khi class/level modifiers
+         * đã được cập nhật.
+         */
+        if (plugin.getEquipmentListener() != null) {
+
+            plugin.getEquipmentListener()
+                    .refreshEquipment(player);
+        }
+    }
+
+
+    // ==================================================
+    // REMOVE CLASS + RESET BASE STATS
+    // ==================================================
+
+    public void removeClassAndResetStats(
+            Player player
+    ) {
+
+        if (player == null) {
+            return;
+        }
+
+        UUID uuid =
+                player.getUniqueId();
+
+        PlayerData data =
+                getData(player);
+
+        /*
+         * Xoá runtime equipment trước.
+         */
+        plugin.getEquipmentManager()
+                .clear(uuid);
+
+        /*
+         * Xoá class / level / equipment modifiers.
+         */
+        plugin.getStatManager()
+                .clear(uuid);
+
+        /*
+         * Reset BASE STATS về 0.
+         */
+        data.getStats()
+                .resetAllToZero();
+
+        /*
+         * Bỏ class.
+         */
+        data.setRpgClass(null);
+
+        /*
+         * Đồng bộ lại base zero vào StatManager.
+         */
+        plugin.getStatManager()
+                .syncBaseStats(
+                        uuid,
+                        data.getStats()
+                );
     }
 
     // ==================================================
@@ -192,6 +283,12 @@ public class PlayerManager {
 
             plugin.getStatManager()
                     .removeClass(
+                            uuid,
+                            data.getRpgClass()
+                    );
+
+            plugin.getStatManager()
+                    .removeClassGrowth(
                             uuid,
                             data.getRpgClass()
                     );

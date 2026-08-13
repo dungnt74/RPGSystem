@@ -34,11 +34,16 @@ public class RPGCombatListener implements Listener {
         }
 
         /*
-         * Tắt damage vanilla.
-         * RPGCombat sẽ tự tính damage.
+         * KHÔNG cancel event.
+         *
+         * Nếu cancel rồi chỉ gọi CombatService.damage(),
+         * Bukkit sẽ không trừ HP thật và các listener damage
+         * cũng không nhận được damage cuối cùng.
+         *
+         * CombatService chỉ có nhiệm vụ TÍNH damage.
+         * Ở đây ta đưa damage cuối cùng vào Bukkit event
+         * để Minecraft tự trừ máu.
          */
-        event.setCancelled(true);
-
         DamageResult result =
                 plugin.getCombatService()
                         .damage(
@@ -47,38 +52,24 @@ public class RPGCombatListener implements Listener {
                                 1.0
                         );
 
-        if (result == null) {
-            return;
-        }
-
-        if (result.getDamage() <= 0) {
-
-            player.sendMessage(
-                    "§7✦ Đòn đánh không gây damage."
-            );
-
-            return;
-        }
-
-        if (result.isCritical()) {
-
-            player.sendMessage(
-                    "§6§l✦ CRITICAL! §f"
-                            + String.format(
-                            "%.1f",
-                            result.getDamage()
-                    )
-            );
-
-            return;
-        }
-
-        player.sendMessage(
-                "§c⚔ Damage §f→ §e"
-                        + String.format(
-                        "%.1f",
+        double finalDamage =
+                Math.max(
+                        0,
                         result.getDamage()
-                )
-        );
+                );
+
+        event.setDamage(finalDamage);
+
+        // Floating damage dùng đúng damage cuối cùng.
+        if (finalDamage > 0) {
+
+            plugin.getFloatingDamage()
+                    .show(
+                            target,
+                            finalDamage,
+                            result.isCritical(),
+                            false
+                    );
+        }
     }
 }

@@ -447,6 +447,80 @@ public class StatManager {
         }
     }
 
+    public void syncBaseStats(
+            UUID uuid,
+            StatsContainer stats
+    ) {
+
+        if (uuid == null || stats == null) {
+            return;
+        }
+
+        setBaseStat(uuid, StatType.ATTACK, stats.getAttack());
+        setBaseStat(uuid, StatType.MAGIC_ATTACK, stats.getMagicAttack());
+
+        setBaseStat(uuid, StatType.ATTACK_SPEED, stats.getAttackSpeed());
+
+        setBaseStat(uuid, StatType.CRIT_CHANCE, stats.getCritChance());
+        setBaseStat(uuid, StatType.CRIT_DAMAGE, stats.getCritDamage());
+        setBaseStat(uuid, StatType.CRIT_RESISTANCE, stats.getCritResistance());
+
+        setBaseStat(uuid, StatType.ARMOR_PENETRATION, stats.getArmorPenetration());
+        setBaseStat(uuid, StatType.MAGIC_PENETRATION, stats.getMagicPenetration());
+
+        setBaseStat(uuid, StatType.SKILL_DAMAGE, stats.getSkillDamage());
+
+        setBaseStat(uuid, StatType.DEFENSE, stats.getDefense());
+        setBaseStat(uuid, StatType.MAGIC_DEFENSE, stats.getMagicDefense());
+
+        setBaseStat(uuid, StatType.DAMAGE_REDUCTION, stats.getDamageReduction());
+
+        setBaseStat(uuid, StatType.BLOCK_CHANCE, stats.getBlockChance());
+        setBaseStat(uuid, StatType.BLOCK_POWER, stats.getBlockPower());
+
+        setBaseStat(uuid, StatType.DODGE_CHANCE, stats.getDodgeChance());
+
+        setBaseStat(uuid, StatType.MAX_HEALTH, stats.getMaxHealth());
+        setBaseStat(uuid, StatType.MAX_MANA, stats.getMaxMana());
+
+        setBaseStat(uuid, StatType.HEALTH_REGEN, stats.getHealthRegen());
+        setBaseStat(uuid, StatType.MANA_REGEN, stats.getManaRegen());
+
+        setBaseStat(uuid, StatType.LIFESTEAL, stats.getLifesteal());
+        setBaseStat(uuid, StatType.MANA_STEAL, stats.getManaSteal());
+
+        setBaseStat(uuid, StatType.COOLDOWN_REDUCTION, stats.getCooldownReduction());
+
+        setBaseStat(uuid, StatType.MOVE_SPEED, stats.getMoveSpeed());
+
+        setBaseStat(uuid, StatType.EXP_BONUS, stats.getExpBonus());
+        setBaseStat(uuid, StatType.GOLD_BONUS, stats.getGoldBonus());
+
+        setBaseStat(uuid, StatType.DROP_RATE, stats.getDropRate());
+        setBaseStat(uuid, StatType.LUCK, stats.getLuck());
+    }
+
+    // ==================================================
+    // REMOVE CLASS GROWTH
+    // ==================================================
+
+    public void removeClassGrowth(
+            UUID uuid,
+            RPGClass rpgClass
+    ) {
+
+        if (uuid == null || rpgClass == null) {
+            return;
+        }
+
+        removeModifiersByPrefix(
+                uuid,
+                "class_growth_" +
+                        rpgClass.getId() +
+                        "_"
+        );
+    }
+
     // ==================================================
     // REMOVE CLASS
     // ==================================================

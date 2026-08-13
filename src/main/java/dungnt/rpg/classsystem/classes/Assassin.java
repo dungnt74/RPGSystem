@@ -43,7 +43,7 @@ public class Assassin extends RPGClass {
                         "class_assassin_crit_damage",
                         StatType.CRIT_DAMAGE,
                         ModifierType.FLAT,
-                        0.50
+                        50
                 )
         );
 

@@ -4,7 +4,6 @@ import dungnt.rpg.stats.ModifierType;
 import dungnt.rpg.stats.StatModifier;
 import dungnt.rpg.stats.StatType;
 
-import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -14,6 +13,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 public class ItemManager {
 
@@ -73,10 +74,6 @@ public class ItemManager {
             return item;
         }
 
-        // ==================================================
-        // BASIC PDC
-        // ==================================================
-
         PersistentDataContainer pdc =
                 meta.getPersistentDataContainer();
 
@@ -86,79 +83,23 @@ public class ItemManager {
                 rpgItem.getId()
         );
 
-        pdc.set(
-                slotKey,
-                PersistentDataType.STRING,
-                rpgItem.getSlot()
-                        .name()
-        );
+        if (rpgItem.getSlot() != null) {
 
-        // ==================================================
-        // DISPLAY NAME
-        // ==================================================
+            pdc.set(
+                    slotKey,
+                    PersistentDataType.STRING,
+                    rpgItem.getSlot().name()
+            );
+        }
 
         meta.setDisplayName(
                 rpgItem.getName()
         );
 
-        // ==================================================
-        // LORE
-        // ==================================================
-
-        List<String> lore =
-                new ArrayList<>();
-
-        lore.add(
-                "§8§m--------------------"
+        writeLore(
+                meta,
+                pdc
         );
-
-        lore.add(
-                "§7Slot: §e"
-                        + formatSlot(
-                        rpgItem.getSlot()
-                )
-        );
-
-        for (StatModifier modifier :
-                rpgItem.getStatModifiers()) {
-
-            lore.add(
-                    createStatLore(
-                            modifier
-                    )
-            );
-        }
-
-        lore.add(
-                "§8§m--------------------"
-        );
-
-        meta.setLore(lore);
-
-        // ==================================================
-        // STAT PDC
-        // ==================================================
-
-        for (StatModifier modifier :
-                rpgItem.getStatModifiers()) {
-
-            NamespacedKey statKey =
-                    createStatKey(
-                            modifier.getType()
-                    );
-
-            String value =
-                    modifier.getModifierType()
-                            .name()
-                            + ":"
-                            + modifier.getAmount();
-
-            pdc.set(
-                    statKey,
-                    PersistentDataType.STRING,
-                    value
-            );
-        }
 
         item.setItemMeta(meta);
 
@@ -201,28 +142,34 @@ public class ItemManager {
             return null;
         }
 
+        /*
+         * Equipment slot có thể chưa được set.
+         *
+         * Như vậy /itemstat add có thể dùng trước
+         * /equipment addslot.
+         */
+        EquipmentSlot slot = null;
+
         String slotName =
                 pdc.get(
                         slotKey,
                         PersistentDataType.STRING
                 );
 
-        if (slotName == null) {
-            return null;
-        }
+        if (slotName != null &&
+                !slotName.isBlank()) {
 
-        EquipmentSlot slot;
+            try {
 
-        try {
+                slot =
+                        EquipmentSlot.valueOf(
+                                slotName.toUpperCase(Locale.ROOT)
+                        );
 
-            slot =
-                    EquipmentSlot.valueOf(
-                            slotName.toUpperCase()
-                    );
+            } catch (IllegalArgumentException ignored) {
 
-        } catch (IllegalArgumentException exception) {
-
-            return null;
+                return null;
+            }
         }
 
         String name =
@@ -238,22 +185,16 @@ public class ItemManager {
                         slot
                 );
 
-
         // ==================================================
-        // READ STATS
+        // READ STATS FROM PDC
         // ==================================================
 
         for (StatType statType :
                 StatType.values()) {
 
-            NamespacedKey statKey =
-                    createStatKey(
-                            statType
-                    );
-
             String value =
                     pdc.get(
-                            statKey,
+                            createStatKey(statType),
                             PersistentDataType.STRING
                     );
 
@@ -278,9 +219,10 @@ public class ItemManager {
 
         return rpgItem;
     }
-//==========================
-// GET RPG ITEM
-// ==================================================
+
+    // ==================================================
+    // GET RPG ITEM
+    // ==================================================
 
     public RPGItem getRPGItem(
             ItemStack item
@@ -318,6 +260,51 @@ public class ItemManager {
     }
 
     // ==================================================
+    // ENSURE RPG ITEM ID
+    // ==================================================
+
+    public boolean ensureRPGItem(
+            ItemStack item
+    ) {
+
+        if (item == null ||
+                item.getType().isAir()) {
+
+            return false;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        String itemId =
+                pdc.get(
+                        itemKey,
+                        PersistentDataType.STRING
+                );
+
+        if (itemId == null ||
+                itemId.isBlank()) {
+
+            pdc.set(
+                    itemKey,
+                    PersistentDataType.STRING,
+                    "custom_" + UUID.randomUUID()
+            );
+        }
+
+        item.setItemMeta(meta);
+
+        return true;
+    }
+
+    // ==================================================
     // GET ITEM ID
     // ==================================================
 
@@ -341,6 +328,232 @@ public class ItemManager {
                         itemKey,
                         PersistentDataType.STRING
                 );
+    }
+
+    // ==================================================
+    // SET EQUIPMENT SLOT
+    // ==================================================
+
+    public boolean setEquipmentSlot(
+            ItemStack item,
+            EquipmentSlot slot
+    ) {
+
+        if (item == null ||
+                item.getType().isAir() ||
+                slot == null) {
+
+            return false;
+        }
+
+        if (!ensureRPGItem(item)) {
+            return false;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        pdc.set(
+                slotKey,
+                PersistentDataType.STRING,
+                slot.name()
+        );
+
+        writeLore(
+                meta,
+                pdc
+        );
+
+        item.setItemMeta(meta);
+
+        return true;
+    }
+
+    // ==================================================
+    // REMOVE EQUIPMENT SLOT
+    // ==================================================
+
+    public boolean removeEquipmentSlot(
+            ItemStack item
+    ) {
+
+        if (item == null ||
+                item.getType().isAir()) {
+
+            return false;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        pdc.remove(slotKey);
+
+        writeLore(
+                meta,
+                pdc
+        );
+
+        item.setItemMeta(meta);
+
+        return true;
+    }
+
+    // ==================================================
+    // ADD STAT
+    // ==================================================
+
+    public boolean addStat(
+            ItemStack item,
+            StatType statType,
+            ModifierType modifierType,
+            double amount
+    ) {
+
+        if (item == null ||
+                item.getType().isAir() ||
+                statType == null ||
+                modifierType == null) {
+
+            return false;
+        }
+
+        if (!ensureRPGItem(item)) {
+            return false;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        String value =
+                modifierType.name()
+                        + ":"
+                        + amount;
+
+        /*
+         * Mỗi StatType dùng một PDC key.
+         * Add lại cùng stat sẽ replace stat cũ.
+         */
+        pdc.set(
+                createStatKey(statType),
+                PersistentDataType.STRING,
+                value
+        );
+
+        writeLore(
+                meta,
+                pdc
+        );
+
+        item.setItemMeta(meta);
+
+        return true;
+    }
+
+    // ==================================================
+    // REMOVE STAT
+    // ==================================================
+
+    public boolean removeStat(
+            ItemStack item,
+            StatType statType
+    ) {
+
+        if (item == null ||
+                item.getType().isAir() ||
+                statType == null) {
+
+            return false;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        boolean existed =
+                pdc.has(
+                        createStatKey(statType),
+                        PersistentDataType.STRING
+                );
+
+        pdc.remove(
+                createStatKey(statType)
+        );
+
+        writeLore(
+                meta,
+                pdc
+        );
+
+        item.setItemMeta(meta);
+
+        return existed;
+    }
+
+    // ==================================================
+    // CLEAR ALL STATS
+    // ==================================================
+
+    public void clearStats(
+            ItemStack item
+    ) {
+
+        if (item == null ||
+                item.getType().isAir()) {
+
+            return;
+        }
+
+        ItemMeta meta =
+                item.getItemMeta();
+
+        if (meta == null) {
+            return;
+        }
+
+        PersistentDataContainer pdc =
+                meta.getPersistentDataContainer();
+
+        for (StatType statType :
+                StatType.values()) {
+
+            pdc.remove(
+                    createStatKey(statType)
+            );
+        }
+
+        writeLore(
+                meta,
+                pdc
+        );
+
+        item.setItemMeta(meta);
     }
 
     // ==================================================
@@ -376,10 +589,10 @@ public class ItemManager {
         try {
 
             return EquipmentSlot.valueOf(
-                    value.toUpperCase()
+                    value.toUpperCase(Locale.ROOT)
             );
 
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException ignored) {
 
             return null;
         }
@@ -393,21 +606,102 @@ public class ItemManager {
             ItemStack item
     ) {
 
-        List<StatModifier> modifiers =
-                new ArrayList<>();
-
         RPGItem rpgItem =
                 fromItemStack(item);
 
         if (rpgItem == null) {
-            return modifiers;
+            return List.of();
         }
 
-        modifiers.addAll(
+        return new ArrayList<>(
                 rpgItem.getStatModifiers()
         );
+    }
 
-        return modifiers;
+    // ==================================================
+    // WRITE LORE
+    // ==================================================
+
+    private void writeLore(
+            ItemMeta meta,
+            PersistentDataContainer pdc
+    ) {
+
+        List<String> lore =
+                new ArrayList<>();
+
+        lore.add(
+                "§8§m--------------------"
+        );
+
+        String slotName =
+                pdc.get(
+                        slotKey,
+                        PersistentDataType.STRING
+                );
+
+        if (slotName != null) {
+
+            try {
+
+                EquipmentSlot slot =
+                        EquipmentSlot.valueOf(
+                                slotName.toUpperCase(Locale.ROOT)
+                        );
+
+                lore.add(
+                        "§7Slot: §e"
+                                + formatSlot(slot)
+                );
+
+            } catch (IllegalArgumentException ignored) {
+                // Không ghi slot lỗi.
+            }
+        }
+
+        String itemId =
+                pdc.get(
+                        itemKey,
+                        PersistentDataType.STRING
+                );
+
+        if (itemId == null) {
+            itemId = "unknown";
+        }
+
+        for (StatType statType :
+                StatType.values()) {
+
+            String value =
+                    pdc.get(
+                            createStatKey(statType),
+                            PersistentDataType.STRING
+                    );
+
+            if (value == null) {
+                continue;
+            }
+
+            StatModifier modifier =
+                    parseModifier(
+                            itemId,
+                            statType,
+                            value
+                    );
+
+            if (modifier != null) {
+
+                lore.add(
+                        createStatLore(modifier)
+                );
+            }
+        }
+
+        lore.add(
+                "§8§m--------------------"
+        );
+
+        meta.setLore(lore);
     }
 
     // ==================================================
@@ -422,7 +716,7 @@ public class ItemManager {
                 plugin,
                 "rpg_stat_"
                         + type.name()
-                        .toLowerCase()
+                        .toLowerCase(Locale.ROOT)
         );
     }
 
@@ -437,53 +731,44 @@ public class ItemManager {
     ) {
 
         String[] parts =
-                value.split(
-                        ":",
-                        2
-                );
+                value.split(":", 2);
 
         if (parts.length != 2) {
             return null;
         }
 
-        ModifierType modifierType;
-
-        double amount;
-
         try {
 
-            modifierType =
+            ModifierType modifierType =
                     ModifierType.valueOf(
                             parts[0]
-                                    .toUpperCase()
+                                    .toUpperCase(Locale.ROOT)
                     );
 
-            amount =
-                    Double.parseDouble(
-                            parts[1]
-                    );
+            double amount =
+                    Double.parseDouble(parts[1]);
 
-        } catch (IllegalArgumentException exception) {
+            String modifierId =
+                    "item_"
+                            + itemId
+                            + "_"
+                            + statType.name()
+                            .toLowerCase(Locale.ROOT)
+                            + "_"
+                            + modifierType.name()
+                            .toLowerCase(Locale.ROOT);
+
+            return new StatModifier(
+                    modifierId,
+                    statType,
+                    modifierType,
+                    amount
+            );
+
+        } catch (IllegalArgumentException ignored) {
 
             return null;
         }
-
-        String modifierId =
-                "item_"
-                        + itemId
-                        + "_"
-                        + statType.name()
-                        .toLowerCase()
-                        + "_"
-                        + modifierType.name()
-                        .toLowerCase();
-
-        return new StatModifier(
-                modifierId,
-                statType,
-                modifierType,
-                amount
-        );
     }
 
     // ==================================================
@@ -504,8 +789,10 @@ public class ItemManager {
                         ? "§a+"
                         : "§c";
 
-        double amount =
-                modifier.getAmount();
+        String amount =
+                formatNumber(
+                        modifier.getAmount()
+                );
 
         if (modifier.getModifierType()
                 == ModifierType.PERCENT) {
@@ -514,20 +801,19 @@ public class ItemManager {
                     + statName
                     + ": "
                     + prefix
-                    + formatNumber(amount)
+                    + amount
                     + "%";
-
         }
 
         return "§7"
                 + statName
                 + ": "
                 + prefix
-                + formatNumber(amount);
+                + amount;
     }
 
     // ==================================================
-    // FORMAT STAT NAME
+    // FORMAT STAT
     // ==================================================
 
     private String formatStatName(
@@ -536,19 +822,13 @@ public class ItemManager {
 
         String raw =
                 type.name()
-                        .toLowerCase()
-                        .replace(
-                                "_",
-                                " "
-                        );
-
-        String[] words =
-                raw.split(" ");
+                        .toLowerCase(Locale.ROOT)
+                        .replace("_", " ");
 
         StringBuilder result =
                 new StringBuilder();
 
-        for (String word : words) {
+        for (String word : raw.split(" ")) {
 
             if (word.isEmpty()) {
                 continue;
@@ -561,10 +841,7 @@ public class ItemManager {
             );
 
             if (word.length() > 1) {
-
-                result.append(
-                        word.substring(1)
-                );
+                result.append(word.substring(1));
             }
 
             result.append(" ");
@@ -583,19 +860,13 @@ public class ItemManager {
 
         String raw =
                 slot.name()
-                        .toLowerCase()
-                        .replace(
-                                "_",
-                                " "
-                        );
-
-        String[] words =
-                raw.split(" ");
+                        .toLowerCase(Locale.ROOT)
+                        .replace("_", " ");
 
         StringBuilder result =
                 new StringBuilder();
 
-        for (String word : words) {
+        for (String word : raw.split(" ")) {
 
             if (word.isEmpty()) {
                 continue;
@@ -608,10 +879,7 @@ public class ItemManager {
             );
 
             if (word.length() > 1) {
-
-                result.append(
-                        word.substring(1)
-                );
+                result.append(word.substring(1));
             }
 
             result.append(" ");
@@ -631,12 +899,14 @@ public class ItemManager {
         if (value == Math.rint(value)) {
 
             return String.format(
+                    Locale.US,
                     "%.0f",
                     value
             );
         }
 
         return String.format(
+                Locale.US,
                 "%.2f",
                 value
         );

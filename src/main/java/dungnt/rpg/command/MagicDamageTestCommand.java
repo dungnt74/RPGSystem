@@ -93,6 +93,39 @@ public class MagicDamageTestCommand
                         );
 
         // =========================
+        // APPLY REAL DAMAGE
+        // =========================
+        //
+        // Dùng target.damage(damage) KHÔNG truyền Player
+        // để tránh EntityDamageByEntityEvent quay lại
+        // RPGCombatListener và bị tính thành physical damage.
+        //
+        if (result.getDamage() > 0) {
+
+            /*
+             * Hiện floating trước khi trừ HP để vẫn thấy
+             * damage ngay cả khi đòn đánh giết chết mob.
+             */
+            plugin.getFloatingDamage()
+                    .show(
+                            target,
+                            result.getDamage(),
+                            result.isCritical(),
+                            true
+                    );
+
+            /*
+             * Không truyền Player làm damager.
+             * Nếu truyền Player, EntityDamageByEntityEvent
+             * sẽ quay lại RPGCombatListener và bị tính
+             * thành physical damage.
+             */
+            target.damage(
+                    result.getDamage()
+            );
+        }
+
+        // =========================
         // RESULT
         // =========================
 
