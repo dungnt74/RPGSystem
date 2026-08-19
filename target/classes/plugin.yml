@@ -1,0 +1,77 @@
+name: DungNTRPG
+version: 1.0.0
+main: dungnt.rpg.MyRPG
+api-version: '1.21'
+
+author: DungNT
+description: Custom RPG Class and Skill System
+softdepend: [PlayerPoints]
+
+commands:
+  rpg:
+    permission: dungntrpg.admin
+    description: DungNT RPG core command
+    usage: /rpg <item|mob|gem|socket|reload|help>
+
+  class:
+    permission: dungntrpg.admin
+    description: Quản lý Class RPG
+    usage: /class
+
+  skills:
+    permission: dungntrpg.admin
+    description: Sử dụng Skill RPG
+    usage: /skills <skill>
+
+  stats:
+    permission: dungntrpg.admin
+    description: Test RPG stats
+
+  mobtest:
+    permission: dungntrpg.admin
+    description: Spawn RPG test mob
+    usage: /mobtest
+
+  magicdamage:
+    permission: dungntrpg.admin
+    description: Test magic damage
+
+  bowdamage:
+    permission: dungntrpg.admin
+    description: Test bow damage
+
+  level:
+    permission: dungntrpg.admin
+    description: Xem Level và EXP
+    usage: /level
+
+  expboost:
+    description: Mở cửa hàng EXP Boost
+    usage: /expboost
+
+  mana:
+    permission: dungntrpg.admin
+    description: Quản lý Mana RPG
+    usage: /mana [amount|add <player> <amount>]
+
+  itemtest:
+    permission: dungntrpg.admin
+    description: Test RPG class items
+    usage: /itemtest <item_id>
+
+  equipment:
+    description: Xem trang bị
+    usage: /equipment
+
+  team:
+    description: Quản lý team
+    usage: /team <create|delete|invite|accept|kick|leave>
+
+  socket:
+    description: Mở hệ thống socket
+    usage: /socket
+
+permissions:
+  dungntrpg.admin:
+    description: Quản trị DungNT RPG
+    default: op

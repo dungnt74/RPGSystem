@@ -1,0 +1,169 @@
+# DungNT RPG - CUSTOM ITEMS
+# /rpg reload -> reload definitions from this file.
+# model: <id> applies the Paper item_model key dungntrpg:<id>.
+
+items:
+  dragon_slayer:
+    name: "&6&lDragon Slayer"
+    material: NETHERITE_SWORD
+    slot: MAIN_HAND
+    model: dragon_slayer
+    rarity: LEGENDARY
+    level: 50
+    upgrade:
+      max: 10
+      start: 0
+    sockets: 4
+    lore:
+      - "&8&m------------------------"
+      - "&6&l✦ DRAGON SLAYER ✦"
+      - "&7Một thanh kiếm được rèn từ sức mạnh của Dragon."
+      - "&c⚔ &fAttack: &c+150"
+      - "&6✦ &fCrit Chance: &e+20%"
+      - "&e✦ &fCrit Damage: &e+60%"
+      - "&7✦ &fArmor Penetration: &7+25%"
+      - "&8◆ &f4 Socket"
+      - "&8&m------------------------"
+    stats:
+      ATTACK:
+        type: FLAT
+        amount: 150
+      CRIT_CHANCE:
+        type: PERCENT
+        amount: 20
+      CRIT_DAMAGE:
+        type: PERCENT
+        amount: 60
+      ARMOR_PENETRATION:
+        type: PERCENT
+        amount: 25
+
+  warrior_sword:
+    name: "&c&lWarrior's Sword"
+    material: NETHERITE_SWORD
+    slot: MAIN_HAND
+    model: warrior_sword
+    rarity: RARE
+    level: 20
+    upgrade:
+      max: 5
+    sockets: 2
+    lore:
+      - "&7Vũ khí cơ bản của Warrior."
+      - "&8◆ Có thể gắn &e2 Gem"
+    stats:
+      ATTACK:
+        type: FLAT
+        amount: 25
+      CRIT_CHANCE:
+        type: PERCENT
+        amount: 5
+
+  arcane_staff:
+    name: "&5&lArcane Staff"
+    material: BLAZE_ROD
+    slot: MAIN_HAND
+    model: arcane_staff
+    rarity: EPIC
+    level: 30
+    upgrade:
+      max: 8
+    sockets: 3
+    lore:
+      - "&7Một cây trượng chứa năng lượng ma thuật."
+      - "&8◆ Có thể gắn &e3 Gem"
+    stats:
+      MAGIC_ATTACK:
+        type: FLAT
+        amount: 70
+      SKILL_DAMAGE:
+        type: PERCENT
+        amount: 20
+      MAX_MANA:
+        type: FLAT
+        amount: 100
+
+  hunter_bow:
+    name: "&a&lHunter's Bow"
+    material: BOW
+    slot: MAIN_HAND
+    model: hunter_bow
+    rarity: UNCOMMON
+    level: 15
+    upgrade:
+      max: 5
+    sockets: 2
+    lore:
+      - "&7Một cây cung dành cho Archer."
+      - "&8◆ Có thể gắn &e2 Gem"
+    stats:
+      ATTACK:
+        type: FLAT
+        amount: 20
+      CRIT_CHANCE:
+        type: PERCENT
+        amount: 8
+      ATTACK_SPEED:
+        type: PERCENT
+        amount: 10
+
+  shadow_dagger:
+    name: "&9&lShadow Dagger"
+    material: DIAMOND_SWORD
+    slot: MAIN_HAND
+    model: shadow_dagger
+    rarity: RARE
+    level: 25
+    upgrade:
+      max: 7
+    sockets: 2
+    lore:
+      - "&7Một con dao găm nhanh và nguy hiểm."
+      - "&8◆ Có thể gắn &e2 Gem"
+    stats:
+      ATTACK:
+        type: FLAT
+        amount: 28
+      CRIT_CHANCE:
+        type: PERCENT
+        amount: 15
+      CRIT_DAMAGE:
+        type: PERCENT
+        amount: 25
+      ATTACK_SPEED:
+        type: PERCENT
+        amount: 15
+
+  celestial_core:
+    name: "&d&lCelestial Core"
+    material: NETHER_STAR
+    slot: BADGE
+    model: celestial_core
+    rarity: MYTHIC
+    level: 100
+    upgrade:
+      max: 15
+    sockets: 4
+    lore:
+      - "&d&l✦ CELESTIAL ✦"
+      - "&7Một vật phẩm mang sức mạnh của những vì sao."
+      - "&8◆ &f4 Socket"
+    stats:
+      MAX_HEALTH:
+        type: FLAT
+        amount: 250
+      MAX_MANA:
+        type: FLAT
+        amount: 250
+      ATTACK:
+        type: FLAT
+        amount: 30
+      MAGIC_ATTACK:
+        type: FLAT
+        amount: 30
+      CRIT_CHANCE:
+        type: PERCENT
+        amount: 10
+      DAMAGE_REDUCTION:
+        type: PERCENT
+        amount: 5

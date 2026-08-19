@@ -1,0 +1,3 @@
+# DungNT RPG - Mob definitions
+# Mob loader sẽ được nối vào MobManager ở phase tiếp theo.
+mobs: {}

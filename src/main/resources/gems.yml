@@ -1,0 +1,3 @@
+# DungNT RPG - Gem definitions
+# Gem loader sẽ được nối vào GemManager ở phase tiếp theo.
+gems: {}
